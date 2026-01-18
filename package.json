@@ -1,0 +1,9 @@
+{
+  "name": "TravaUni_Safari_Tours-Frontend",
+  "version": "1.0.0",
+  "description": "Website Frontend",
+  "main": "index.js",
+  "repository": "https://github.com/DeeShay-Softwares/TravaUni_Safari_Tours-Frontend.git",
+  "author": "Dorcas Mucheche <dorcasmucheche@gmail.com>",
+  "license": "MIT"
+}
