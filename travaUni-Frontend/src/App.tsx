@@ -10,6 +10,8 @@ import { HomePage } from './pages/HomePage'
 import ViewTripGallery from './components/ViewTripGallery';
 import ViewBookedTripsPage from './pages/ViewBookedTripsPage';
 import AccountPage from './To-be-used_files&pages/AccountsPage';
+import BookingPage from './pages/BookingPage';
+import AdminManagement from './pages/RegisterAdminPage';
 
 function App() {
   return (
@@ -35,6 +37,10 @@ function App() {
           <Route path="/viewgallery" element={<ViewTripGallery />} />
           <Route path="/viewtrips" element={<ViewBookedTripsPage />} />
           <Route path="/bookingview" element={<AccountPage />} />
+          <Route path="/book" element={<BookingPage />} />
+          <Route path="/regAdmin" element={<AdminManagement />} />
+
+
 
           
           {/* Catch-all route */}

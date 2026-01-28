@@ -67,3 +67,62 @@ export interface VerificationData {
   bookingId: string;
   phoneNumber: string;
 }
+
+// src/types/admin.ts
+export interface TripUpdate {
+  id: string;
+  tripId: string;
+  title: string;
+  content: string;
+  date: string;
+  attachments?: string[]; // Array of image URLs
+  important: boolean;
+  sentTo: 'whatsapp' | 'email' | 'both';
+}
+
+export interface Registration {
+  id: string;
+  bookingId: string;
+  tripId: string;
+  tripTitle: string;
+  status: 'pending' | 'confirmed' | 'cancelled' | 'completed';
+  paymentStatus: 'pending' | 'partial' | 'paid';
+  paymentProof?: string; // URL to payment proof image
+  paymentAmount: number;
+  registrationDate: string;
+  
+  // Personal Details
+  fullName: string;
+  email: string;
+  phoneNumber: string;
+  age: number;
+  gender: 'male' | 'female' | 'other';
+  nationality: string;
+  
+  // Student Information
+  isStudent: boolean;
+  university?: string;
+  studentId?: string;
+  studentProof?: string; // URL to student proof
+  
+  // Emergency Contact
+  emergencyContact: {
+    name: string;
+    phone: string;
+    relationship: string;
+  };
+  
+  // Medical Information
+  medicalConditions?: string;
+  dietaryRestrictions?: string;
+  
+  // Communication
+  whatsappNumber?: string;
+  preferredContact: 'whatsapp' | 'email' | 'phone';
+  
+  // Confirmation Tracking
+  confirmedBy?: string;
+  confirmedAt?: string;
+  confirmationEmailSent: boolean;
+  whatsappGroupAdded: boolean;
+}

@@ -7,7 +7,6 @@ import {
   Box,
   Chip,
   IconButton,
-  Button
 } from '@mui/material';
 import { FiCalendar, FiEdit, FiTrash2, FiEye } from 'react-icons/fi';
 import { AiFillStar } from 'react-icons/ai';
@@ -61,6 +60,7 @@ const AdminTripCard: React.FC<AdminTripCardProps> = ({
         position: 'relative',
         overflow: 'hidden',
         transition: 'all 0.3s ease',
+         backgroundColor: 'transparent',
         '&:hover': {
           transform: 'translateY(-4px)',
           boxShadow: '0 12px 24px rgba(0, 0, 0, 0.2)',
@@ -78,7 +78,7 @@ const AdminTripCard: React.FC<AdminTripCardProps> = ({
           backgroundImage: `url(${trip.image})`,
           backgroundSize: 'cover',
           backgroundPosition: 'center',
-          zIndex: -1,
+          zIndex: -2,
           '&::before': {
             content: '""',
             position: 'absolute',
@@ -86,7 +86,8 @@ const AdminTripCard: React.FC<AdminTripCardProps> = ({
             left: 0,
             right: 0,
             bottom: 0,
-            background: 'linear-gradient(to bottom, rgba(0,0,0,0.1), rgba(0,0,0,0.7))',
+            background: 'linear-gradient(to bottom, rgba(0, 0, 0, 0.15), rgba(0, 0, 0, 0.73))',
+            
           }
         }}
       />
@@ -256,7 +257,7 @@ const AdminTripCard: React.FC<AdminTripCardProps> = ({
             }}
           />
           
-          <Button
+          {/* <Button
             size="small"
             variant="contained"
             onClick={() => onPreview(trip)}
@@ -274,7 +275,7 @@ const AdminTripCard: React.FC<AdminTripCardProps> = ({
             }}
           >
             Preview
-          </Button>
+          </Button> */}
         </Box>
       </CardContent>
     </Card>
