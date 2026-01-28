@@ -24,9 +24,9 @@ import { useNavigate } from "react-router-dom";
 
 // Lazy load page components
 const DestinationPage = lazy(() => import("../pages/BookingServices/FindYourDestination"));
-const BookingPage = lazy(() => import("../pages/BookingServices/BookYourTicket"));
+const BookingPage = lazy(() => import("../pages/BookingServices/ChoosePackage"));
 const PaymentPage = lazy(() => import("../pages/BookingServices/MakeYourPayment"));
-const ViewDestinationPage = lazy(() => import("../pages/BookingServices/ViewDestination"));
+const ViewDestinationPage = lazy(() => import("../pages/BookingServices/viewBookingSummary"));
 
 // Loading spinner component
 const LoadingFallback = ({ stepTitle }: { stepTitle: string }) => (
