@@ -1,5 +1,5 @@
 import '../App.css';
-import { Theme } from '../assets/constants/theme';
+import { Theme } from '../assets/constants/colors';
 import { typography } from '../assets/constants/typography';
 import { Section } from '../components/Section';
 import { SectionTitle } from '../components/SectionTittle';
@@ -68,7 +68,7 @@ export function ToursSection(){
           typography.heroSubtitle.fontSize,
         fontWeight: typography.inputText.fontWeight,
         textAlign: isMobile ? 'left' : 'left',
-        width: '80%',
+        width: '100%',
         lineHeight: 1.6,
       }}
     >
