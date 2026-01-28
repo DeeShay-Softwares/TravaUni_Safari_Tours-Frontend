@@ -1,4 +1,4 @@
-import { Theme } from "../../assets/constants/theme";
+import { Theme } from "../../assets/constants/Theme";
 import { typography } from "../../assets/constants/typography";
 import { SectionTitle } from "../../components/SectionTittle";
 import { useMediaQuery, useTheme as useMuiTheme } from '@mui/material';

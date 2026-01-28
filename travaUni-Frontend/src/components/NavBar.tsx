@@ -18,8 +18,9 @@ import {
 } from '@mui/material';
 import { FiMenu, FiX, FiGlobe, FiUser } from 'react-icons/fi';
 import { typography } from '../assets/constants/typography';
-import { Theme } from '../assets/constants/theme';
+import { Theme } from '../assets/constants/colors';
 import Avatar from '@mui/material/Avatar';
+import AdminLoginModal from '../pages/LoginPage';
 
 interface NavItem {
   label: string;
@@ -34,7 +35,7 @@ interface LanguageOption {
 interface TransparentNavProps {
   logoText?: string;
   navItems?: NavItem[];
-  position?: 'fixed' | 'absolute' | 'sticky' | 'static' | 'relative' | 'scroll';
+  position?: 'fixed' | 'absolute' | 'sticky' | 'static' | 'relative';
   tabBackground?: string;
   tabBorderRadius?: number;
   textColor?: string;
@@ -48,10 +49,9 @@ const NavBar: React.FC<TransparentNavProps> = ({
     { label: 'About', href: '#about' },
     { label: 'Services', href: '#services' },
     { label: 'Tour', href: '#tour' },
-    { label: 'About', href: '#about2' },
     { label: 'Contact', href: '#contact' },
   ],
-  position = 'scroll',
+  position = 'static',
   tabBackground = 'rgba(255, 255, 255, 0.15)', // Glass effect
   tabBorderRadius = 30, // Rounded corners
   textColor = '#ffffff',
@@ -64,6 +64,7 @@ const NavBar: React.FC<TransparentNavProps> = ({
   const [mobileOpen, setMobileOpen] = useState(false);
   const [languageAnchorEl, setLanguageAnchorEl] = useState<null | HTMLElement>(null);
   const [selectedLanguage, setSelectedLanguage] = useState('de');
+   const [open, setOpen] = useState(false);
 
   const handleDrawerToggle = () => {
     setMobileOpen(!mobileOpen);
@@ -84,7 +85,7 @@ const NavBar: React.FC<TransparentNavProps> = ({
     <Box sx={{ 
       width: 300,
       height: '100%',
-      backgroundColor: Theme.bronze[800],
+      backgroundColor: Theme['olive-wood'][600],
       color: 'white',
       display: 'flex',
       flexDirection: 'column',
@@ -192,6 +193,7 @@ const NavBar: React.FC<TransparentNavProps> = ({
         <Button
           variant="outlined"
           startIcon={<FiUser />}
+          onClick={() => setOpen(true)}
           sx={{
             borderRadius: 2,
             fontWeight: 600,
@@ -361,6 +363,7 @@ const NavBar: React.FC<TransparentNavProps> = ({
               {/* Login Button */}
               <Button
                 variant="outlined"
+                onClick={() => setOpen(true)}
                 startIcon={<FiUser />}
                 sx={{
                   borderRadius: 20,
@@ -508,6 +511,7 @@ const NavBar: React.FC<TransparentNavProps> = ({
           </MenuItem>
         ))}
       </Menu>
+      <AdminLoginModal open={open} onClose={() => setOpen(false)} />
     </>
   );
 };

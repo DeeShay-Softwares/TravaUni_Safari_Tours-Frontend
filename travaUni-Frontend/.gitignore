@@ -25,3 +25,6 @@ dist-ssr
 
 #to upload them on imadb
 public/pictures
+
+#to use them later
+src/To-be-used_files&pages
