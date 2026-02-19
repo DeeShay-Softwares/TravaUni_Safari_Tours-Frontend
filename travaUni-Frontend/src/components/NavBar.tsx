@@ -20,7 +20,7 @@ import { FiMenu, FiX, FiGlobe, FiUser } from 'react-icons/fi';
 import { typography } from '../assets/constants/typography';
 import { Theme } from '../assets/constants/colors';
 import Avatar from '@mui/material/Avatar';
-import AdminLoginModal from '../pages/LoginPage';
+import AdminLoginModal from '../pages/AdminLoginModal';
 
 interface NavItem {
   label: string;
