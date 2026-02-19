@@ -16,7 +16,7 @@ export interface Trip {
 export interface TripCardProps {
   trip: Trip;
   onClick?: () => void;
-  className: string
+  className: string;
 }
 
 export interface TripDetailsModalProps {
@@ -34,7 +34,7 @@ export interface AdminTripFormProps {
 export interface SnackbarState {
   open: boolean;
   message: string;
-  severity: 'success' | 'error' | 'info' | 'warning';
+  severity: "success" | "error" | "info" | "warning";
 }
 
 // src/types/booking.ts
@@ -57,7 +57,7 @@ export interface BookedTrip {
   endDate: string;
   travelers: number;
   totalPrice: number;
-  status: 'confirmed' | 'pending' | 'cancelled' | 'completed';
+  status: "confirmed" | "pending" | "cancelled" | "completed";
   bookingDate: string;
   updates: BookingUpdate[];
   whatsappGroupLink?: string;
@@ -77,7 +77,7 @@ export interface TripUpdate {
   date: string;
   attachments?: string[]; // Array of image URLs
   important: boolean;
-  sentTo: 'whatsapp' | 'email' | 'both';
+  sentTo: "whatsapp" | "email" | "both";
 }
 
 export interface Registration {
@@ -85,44 +85,73 @@ export interface Registration {
   bookingId: string;
   tripId: string;
   tripTitle: string;
-  status: 'pending' | 'confirmed' | 'cancelled' | 'completed';
-  paymentStatus: 'pending' | 'partial' | 'paid';
+  status: "pending" | "confirmed" | "cancelled" | "completed";
+  paymentStatus: "pending" | "partial" | "paid";
   paymentProof?: string; // URL to payment proof image
   paymentAmount: number;
   registrationDate: string;
-  
+
   // Personal Details
   fullName: string;
   email: string;
   phoneNumber: string;
   age: number;
-  gender: 'male' | 'female' | 'other';
+  gender: "male" | "female" | "other";
   nationality: string;
-  
+
   // Student Information
   isStudent: boolean;
   university?: string;
   studentId?: string;
   studentProof?: string; // URL to student proof
-  
+
   // Emergency Contact
   emergencyContact: {
     name: string;
     phone: string;
     relationship: string;
   };
-  
+
   // Medical Information
   medicalConditions?: string;
   dietaryRestrictions?: string;
-  
+
   // Communication
   whatsappNumber?: string;
-  preferredContact: 'whatsapp' | 'email' | 'phone';
-  
+  preferredContact: "whatsapp" | "email" | "phone";
+
   // Confirmation Tracking
   confirmedBy?: string;
   confirmedAt?: string;
   confirmationEmailSent: boolean;
   whatsappGroupAdded: boolean;
+}
+
+//auth types
+export interface User {
+  id: string;
+  username: string;
+  role: string;
+  name?: string;
+  status: string;
+}
+
+export interface AuthContextType {
+  user: User | null;
+  token: string | null;
+  login: (token: string, user: User) => void;
+  logout: () => void;
+  isAuthenticated: boolean;
+}
+
+export class ApiError extends Error {
+  public statusCode: number;
+  public data?: unknown;
+
+  constructor(message: string, statusCode: number, data?: unknown) {
+    super(message);
+    this.name = "ApiError";
+    this.statusCode = statusCode;
+    this.data = data;
+  }
 }
