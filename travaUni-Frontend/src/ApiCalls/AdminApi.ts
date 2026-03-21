@@ -6,7 +6,7 @@ const BASE_URL = "http://localhost:4000/admin";
 const token = localStorage.getItem("token");
 
 if (!token) {
-  console.log("No token found for logout");
+  console.log("No token found");
 }
 
 const adminApi = axios.create({

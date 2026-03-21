@@ -8,10 +8,10 @@ import {
   Chip,
  
 } from '@mui/material';
-import { FiCalendar } from 'react-icons/fi';
-import { AiFillStar } from 'react-icons/ai';
+import { FiCalendar, FiMapPin } from 'react-icons/fi';
+//import { AiFillStar } from 'react-icons/ai';
 import type { TripCardProps } from '../types';
-import { colors } from '../assets/constants/Theme';
+import { colors } from '@/assets/constants/theme';
 
 const TripCard: React.FC<TripCardProps> = ({ trip, onClick }) => {
   const formatDateRange = (startDate: string, endDate: string): string => {
@@ -90,17 +90,17 @@ const TripCard: React.FC<TripCardProps> = ({ trip, onClick }) => {
             <Typography 
               variant="h3" 
               sx={{ 
-                fontWeight: 800,
+                fontWeight: 900,
                 fontSize: '32px',
                 lineHeight: 1,
-                color: colors.wheat[300],
+                color: colors.wheat[100],
                 mb: 0.5
               }}
             >
-              {trip.duration} Days
+             <FiMapPin size={35}/>
             </Typography>
             
-            <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+            {/* <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
               <AiFillStar style={{ color: colors.wheat[400], fontSize: 18 }} />
               <Typography 
                 variant="body2" 
@@ -112,7 +112,7 @@ const TripCard: React.FC<TripCardProps> = ({ trip, onClick }) => {
               >
                 {trip.rating}
               </Typography>
-            </Box>
+            </Box> */}
           </Box>
         </Box>
 

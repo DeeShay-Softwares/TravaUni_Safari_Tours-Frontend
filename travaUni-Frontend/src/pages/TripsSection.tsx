@@ -1,15 +1,18 @@
 // src/components/TripsSection.tsx
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   Box,
   Container,
   Typography,
   useTheme,
-  useMediaQuery
+  useMediaQuery,
+  Alert,
+  Button,
+  CircularProgress
 } from '@mui/material';
 import TripCard from '../components/TripCard';
 import TripDetailsModal from '../components/TripDetailsPanel';
-import type { Trip } from '../types';
+import type { TripInput } from '../types';
 import { useNavigate } from 'react-router-dom';
 import { Section } from '../components/Section';
 import { SectionTitle } from '../components/SectionTittle';
@@ -17,6 +20,7 @@ import { Theme } from '../assets/constants/colors';
 import { typography } from '../assets/constants/typography';
 import RotatingQuotes from '../components/RotatingQuotes';
 import { GlassyButton } from '../components/GlassyButton';
+import TripServices from '@/ApiCalls/TripApi';
 
 
 /**
@@ -27,48 +31,6 @@ const TripsSection: React.FC = () => {
   const isMobile = useMediaQuery(theme.breakpoints.down('md'));
  const isSmallScreen = useMediaQuery(theme.breakpoints.down('md'));
 
-  // Sample trips data
-  const [trips] = useState<Trip[]>([
-    {
-      id: '1',
-      title: 'Bali Tour Package',
-      duration: 7,
-      price: 285,
-      startDate: '2024-08-23',
-      endDate: '2024-08-29',
-      rating: 4.9,
-      image: 'https://images.unsplash.com/photo-1537953773345-d172ccf13cf1?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&h=600&q=80',
-      description: 'Experience the beauty of Bali with our 7-day tour package. Visit stunning beaches, ancient temples, and vibrant markets.',
-      location: 'Bali, Indonesia',
-      reviewCount: 128,
-    },
-    {
-      id: '2',
-      title: 'Java Tour Package',
-      duration: 5,
-      price: 218,
-      startDate: '2024-08-23',
-      endDate: '2024-08-27',
-      rating: 4.9,
-      image: 'https://images.unsplash.com/photo-1551632436-cbf8dd35adfa?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&h=600&q=80',
-      description: 'Explore the cultural heart of Indonesia. Visit ancient temples, volcanic landscapes, and traditional villages.',
-      location: 'Java, Indonesia',
-      reviewCount: 89,
-    },
-    {
-      id: '3',
-      title: 'Solo Tour Package',
-      duration: 3,
-      price: 163,
-      startDate: '2024-08-23',
-      endDate: '2024-08-25',
-      rating: 4.9,
-      image: 'https://images.unsplash.com/photo-1518548419970-58e3b4079ab2?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&h=600&q=80',
-      description: 'A short getaway to Solo city, known for its rich Javanese culture and traditional batik.',
-      location: 'Solo, Indonesia',
-      reviewCount: 45,
-    }
-  ]);
 
    const quotes = [
     "Embark on our safari tours where relaxation and adventure awaits, creating unforgettable memories along the way",
@@ -78,14 +40,64 @@ const TripsSection: React.FC = () => {
     "Experience the thrill of the wild while enjoying world-class amenities and service"
   ];
 
-  const [selectedTrip, setSelectedTrip] = useState<Trip | null>(null);
+  const [selectedTrip, setSelectedTrip] = useState<TripInput | null>(null);
   const [isPanelOpen, setIsPanelOpen] = useState(false);
   const navigate = useNavigate();
+  const [trips, setTrips] = useState<TripInput[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+
+  // Fetch all trips when component mounts
+  useEffect(() => {
+    fetchAllTrips();
+  }, []);
+
+  const fetchAllTrips = async () => {
+    setLoading(true);
+    setError(null);
+    
+    try {
+      const response = await TripServices.getAllTrips();
+      
+      // response.data has: { success: true, count: 10, data: [...] }
+      setTrips(response.data.data);
+      console.log('Fetched trips:', response.data.count);
+      
+    } catch (err) {
+      setError('Failed to fetch trips');
+      console.error('Error fetching trips:', err);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // Show loading state
+  if (loading) {
+    return (
+      <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '50vh' }}>
+        <CircularProgress />
+      </Box>
+    );
+  }
+
+  // Show error state
+  if (error) {
+    return (
+      <Container maxWidth="lg" sx={{ py: 4 }}>
+        <Alert severity="error" sx={{ mb: 2 }}>
+          {error}
+        </Alert>
+        <Button variant="contained" onClick={fetchAllTrips}>
+          Try Again
+        </Button>
+      </Container>
+    );
+  }
 
   /**
    * Handles trip card click - opens the side panel
    */
-  const handleTripClick = (trip: Trip) => {
+  const handleTripClick = (trip: TripInput) => {
     setSelectedTrip(trip);
     setIsPanelOpen(true);
   };
@@ -226,7 +238,7 @@ const TripsSection: React.FC = () => {
           >
             {trips.map(trip => (
               <Box 
-                key={trip.id}
+                key={trip.title}
                 sx={{
                   width: '100%',
                   maxWidth: { xs: '400px', sm: 'none' },

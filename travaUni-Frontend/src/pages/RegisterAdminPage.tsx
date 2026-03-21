@@ -49,7 +49,7 @@ import {
   FaSync,
   FaArrowCircleLeft,
 } from "react-icons/fa";
-import { colors } from "@/assets/constants/Theme";
+import { colors } from "@/assets/constants/theme";
 import AdminServices from "@/ApiCalls/AdminApi";
 import { useNavigate } from "react-router-dom";
 import DeleteModal from "@/components/DeleteModal";

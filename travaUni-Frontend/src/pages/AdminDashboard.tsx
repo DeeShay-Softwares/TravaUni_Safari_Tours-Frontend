@@ -45,8 +45,8 @@ import TripDetailsPanel from "../components/TripDetailsPanel";
 import UpdateUploadForm from "../components/UpdateUploadForm";
 import RegistrationsTable from "../components/RegistrationsTable";
 import RegistrationDetailsModal from "../components/RegistrationDetailsModal";
-import type { Trip, TripUpdate, Registration, SnackbarState } from "../types";
-import { colors } from "../assets/constants/Theme";
+import type { TripInput, TripUpdate, Registration, SnackbarState } from "../types";
+import { colors } from "../assets/constants/theme";
 import { useNavigate } from "react-router-dom";
 import AdminInstructionsPaper from "./AdminInfoPage";
 import { AdminDashboardProfile } from "@/components/AdminDashboardProfile";
@@ -54,59 +54,16 @@ import { useAuth } from "@/context/AuthContext";
 import AdminDashboardApi from "@/ApiCalls/AdminDashboardApi";
 import AuthServices from "@/ApiCalls/AdminAuth";
 import axios from "axios";
+import TripServices from "@/ApiCalls/TripApi";
+import DeleteModal from "@/components/DeleteModal";
+
 
 /**
  * AdminDashboard Component - Complete admin interface for managing trips, updates, and registrations
  */
 const AdminDashboard: React.FC = () => {
   // State management
-  const [trips, setTrips] = useState<Trip[]>([
-    {
-      id: "1",
-      title: "Bali Cultural Experience",
-      duration: 7,
-      price: 285,
-      startDate: "2024-08-23",
-      endDate: "2024-08-29",
-      rating: 4.9,
-      image:
-        "https://images.unsplash.com/photo-1537953773345-d172ccf13cf1?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&h=600&q=80",
-      description:
-        "Experience the beauty of Bali with our 7-day tour package. Visit stunning beaches, ancient temples, and vibrant markets.",
-      location: "Bali, Indonesia",
-      reviewCount: 128,
-    },
-    {
-      id: "2",
-      title: "Java Heritage Tour",
-      duration: 5,
-      price: 218,
-      startDate: "2024-04-10",
-      endDate: "2024-04-15",
-      rating: 4.9,
-      image:
-        "https://images.unsplash.com/photo-1551632436-cbf8dd35adfa?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&h=600&q=80",
-      description:
-        "Explore the cultural heart of Indonesia. Visit ancient temples, volcanic landscapes, and traditional villages.",
-      location: "Java, Indonesia",
-      reviewCount: 89,
-    },
-    {
-      id: "3",
-      title: "Solo City Getaway",
-      duration: 3,
-      price: 163,
-      startDate: "2024-06-15",
-      endDate: "2024-06-18",
-      rating: 4.9,
-      image:
-        "https://images.unsplash.com/photo-1518548419970-58e3b4079ab2?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&h=600&q=80",
-      description:
-        "A short getaway to Solo city, known for its rich Javanese culture and traditional batik.",
-      location: "Solo, Indonesia",
-      reviewCount: 45,
-    },
-  ]);
+  const [trips, setTrips] = useState<TripInput[]>([]);
 
   const [tripUpdates, setTripUpdates] = useState<TripUpdate[]>([
     {
@@ -156,8 +113,8 @@ const AdminDashboard: React.FC = () => {
   ]);
 
   // UI States
-  const [selectedTrip, setSelectedTrip] = useState<Trip | null>(null);
-  const [editingTrip, setEditingTrip] = useState<Trip | null>(null);
+  const [selectedTrip, setSelectedTrip] = useState<TripInput | null>(null);
+  const [editingTrip, setEditingTrip] = useState<TripInput | null>(null);
   const [selectedRegistration, setSelectedRegistration] =
     useState<Registration | null>(null);
   const [showTripDetails, setShowTripDetails] = useState(false);
@@ -189,6 +146,8 @@ const AdminDashboard: React.FC = () => {
   const [profileData, setProfileData] = useState<any>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
+  const [deleteModalOpen, setDeleteModalOpen] = useState(false);
+  const [tripToDelete, setTripToDelete] = useState<string | null>(null);
 
   useEffect(() => {
     const fetchProtectedData = async () => {
@@ -232,44 +191,69 @@ const AdminDashboard: React.FC = () => {
   /**
    * Handlers for trips
    */
-  const handleAddTrip = (newTrip: Trip) => {
-    setTrips((prev) => [
-      {
-        ...newTrip,
-        id: Date.now().toString(),
-        reviewCount: newTrip.reviewCount || 0,
-        rating: newTrip.rating || 4.9,
-      },
-      ...prev,
-    ]);
-    setEditingTrip(null);
-    showSnackbar("Trip uploaded successfully!", "success");
-  };
 
-  const handleUpdateTrip = (updatedTrip: Trip) => {
-    setTrips((prev) =>
-      prev.map((trip) => (trip.id === updatedTrip.id ? updatedTrip : trip)),
-    );
-    setEditingTrip(null);
-    showSnackbar("Trip updated successfully!", "success");
-  };
-
-  const handleDeleteTrip = (tripToDelete: Trip) => {
-    if (
-      window.confirm(`Are you sure you want to delete "${tripToDelete.title}"?`)
-    ) {
-      setTrips((prev) => prev.filter((trip) => trip.id !== tripToDelete.id));
-      showSnackbar("Trip deleted successfully!", "info");
+   const fetchAllTrips = async () => {
+    try {
+      const response = await TripServices.getAllTrips();
+      setTrips(response.data.data);
+    } catch (error) {
+      console.error('Error fetching trips:', error);
+    } finally {
+      setLoading(false);
     }
   };
 
-  const handleFormSubmit = (tripData: Trip) => {
-    if (editingTrip) {
-      handleUpdateTrip(tripData);
-    } else {
-      handleAddTrip(tripData);
-    }
-  };
+  useEffect(() => {
+    fetchAllTrips();
+  }, []);
+
+
+  const handleDeleteClick = (AdminId: string) => {
+      setTripToDelete(AdminId);
+      setDeleteModalOpen(true);
+    };
+  
+    const handleConfirmDelete = async () => {
+      if (!tripToDelete) return;
+      try {
+        const response = await TripServices.deleteTrip(tripToDelete);
+        console.log("Deletion response:", response);
+  
+        if (response && response.success === true) {
+          setTrips((prev) =>
+            prev.filter((trip) => trip.title !== tripToDelete),
+          );
+           fetchAllTrips(); 
+          setSnackbar({
+            open: true,
+            message: "Trip deleted successfully",
+            severity: "success",
+          });
+        } else {
+          setSnackbar({
+            open: true,
+            message: response?.message || "Failed to delete trip",
+            severity: "error",
+          });
+        }
+      } catch (error) {
+        console.error("Delete error:", error);
+        setSnackbar({
+          open: true,
+          message: "Error deleting trip. Please try again.",
+          severity: "error",
+        });
+      } finally {
+        setDeleteModalOpen(false);
+        setTripToDelete(null);
+      }
+    };
+  
+    const handleCancelDelete = () => {
+      setDeleteModalOpen(false);
+      setTripToDelete(null);
+    };
+  
 
   /**
    * Handlers for trip updates
@@ -412,14 +396,15 @@ const AdminDashboard: React.FC = () => {
             Back to Trips
           </Button>
           <AdminTripForm
+          formMode="create"
             trip={editingTrip}
-            onSubmit={handleFormSubmit}
             onCancel={() => setEditingTrip(null)}
+            onSuccess={fetchAllTrips}
           />
         </Box>
       );
     }
-
+if (loading) return <div>Loading...</div>;
     return (
       <>
         {/* Header with Upload Trip Button */}
@@ -455,17 +440,13 @@ const AdminDashboard: React.FC = () => {
                 startIcon={<FiPlus />}
                 onClick={() => {
                   setEditingTrip({
-                    id: "",
                     title: "",
-                    duration: 0,
                     price: 0,
                     startDate: "",
                     endDate: "",
-                    rating: 4.9,
                     image: "",
                     description: "",
                     location: "",
-                    reviewCount: 0,
                   });
                 }}
                 sx={{ bgcolor: colors.oliveWood[500] }}
@@ -503,17 +484,13 @@ const AdminDashboard: React.FC = () => {
               startIcon={<FiPlus />}
               onClick={() => {
                 setEditingTrip({
-                  id: "",
                   title: "",
-                  duration: 0,
                   price: 0,
                   startDate: "",
                   endDate: "",
-                  rating: 4.9,
                   image: "",
                   description: "",
                   location: "",
-                  reviewCount: 0,
                 });
               }}
               sx={{
@@ -536,23 +513,20 @@ const AdminDashboard: React.FC = () => {
                 md: "repeat(3, 1fr)",
                 lg: "repeat(3, 1fr)",
               },
-              gap: 3,
+              gap: 4,
               width: "100%",
             }}
           >
+            
             {trips.map((trip) => (
-              <Box key={trip.id}>
-                <AdminTripCard
-                  trip={trip}
-                  onEdit={(t) => {
-                    setEditingTrip(t);
-                  }}
-                  onDelete={handleDeleteTrip}
-                  onPreview={(t) => {
-                    setSelectedTrip(t);
-                    setShowTripDetails(true);
-                  }}
-                />
+              
+              <Box key={trip.title}>
+               <AdminTripCard
+            trip={trip}
+            onDelete={() => handleDeleteClick(trip.title)}
+            onPreview={(trip) => navigate(`/trips/${trip.title}`)}
+            onTripUpdated={fetchAllTrips}
+          />
               </Box>
             ))}
           </Box>
@@ -765,7 +739,7 @@ const AdminDashboard: React.FC = () => {
                 Recent Updates
               </Typography>
               {tripUpdates.slice(0, 5).map((update) => {
-                const trip = trips.find((t) => t.id === update.tripId);
+                const trip = trips.find((t) => t.title === update.tripId);
                 return (
                   <Box
                     key={update.id}
@@ -1110,6 +1084,13 @@ const AdminDashboard: React.FC = () => {
           {snackbar.message}
         </Alert>
       </Snackbar>
+      <DeleteModal
+        open={deleteModalOpen}
+        onClose={handleCancelDelete}
+        onConfirm={handleConfirmDelete}
+        title="Delete Trip"
+        message="Are you sure you want to delete this trip?"
+      />
     </Box>
   );
 };

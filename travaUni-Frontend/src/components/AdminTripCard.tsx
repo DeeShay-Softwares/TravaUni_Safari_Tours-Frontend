@@ -1,284 +1,278 @@
 // src/components/AdminTripCard.tsx
-import React from 'react';
+import React, { useState } from 'react';
 import { 
   Card, 
   CardContent, 
+  CardMedia,
   Typography, 
   Box,
   Chip,
   IconButton,
+  Dialog,
+  DialogContent,
+  Divider
 } from '@mui/material';
-import { FiCalendar, FiEdit, FiTrash2, FiEye } from 'react-icons/fi';
-import { AiFillStar } from 'react-icons/ai';
-import  type { Trip } from '../types';
-import { colors } from '../assets/constants/Theme';
+import { FiCalendar, FiEdit, FiTrash2, FiEye, FiMapPin } from 'react-icons/fi';
+import type { TripInput } from '../types';
+import { colors } from '../assets/constants/theme';
+import AdminTripForm from './AdminTripForm';
 
 interface AdminTripCardProps {
-  trip: Trip;
-  onEdit: (trip: Trip) => void;
-  onDelete: (trip: Trip) => void;
-  onPreview: (trip: Trip) => void;
+  trip: TripInput;
+  onDelete: (trip: TripInput) => void;
+  onPreview: (trip: TripInput) => void;
+  onTripUpdated: () => void;
 }
 
-/**
- * AdminTripCard Component - Trip card for admin with edit/delete actions
- */
 const AdminTripCard: React.FC<AdminTripCardProps> = ({ 
   trip, 
-  onEdit, 
   onDelete, 
-  onPreview 
+  onPreview,
+  onTripUpdated 
 }) => {
-  /**
-   * Formats the date range string from start and end dates
-   */
+  const [editModalOpen, setEditModalOpen] = useState(false);
+
+  const handleEdit = () => {
+    setEditModalOpen(true);
+  };
+
+  const handleCloseModal = () => {
+    setEditModalOpen(false);
+  };
+
+  const handleUpdateSuccess = () => {
+    setEditModalOpen(false);
+    onTripUpdated();
+  };
+
   const formatDateRange = (startDate: string, endDate: string): string => {
     const start = new Date(startDate);
     const end = new Date(endDate);
     
     const formatDate = (date: Date): string => {
-      const day = date.getDate();
-      const month = date.toLocaleString('default', { month: 'long' }).toUpperCase();
-      return `${day} ${month}`;
+      return date.toLocaleDateString('en-US', { 
+        day: 'numeric', 
+        month: 'short',
+        year: 'numeric'
+      });
     };
     
     return `${formatDate(start)} - ${formatDate(end)}`;
   };
 
-  /**
-   * Formats price with currency symbol
-   */
   const formatPrice = (price: number): string => {
-    return `$${price}`;
+    return new Intl.NumberFormat('en-US', {
+      style: 'currency',
+      currency: 'USD',
+      minimumFractionDigits: 0,
+      maximumFractionDigits: 0,
+    }).format(price);
   };
 
   return (
-    <Card 
-      sx={{ 
-        width: '100%',
-        height: '420px',
-        position: 'relative',
-        overflow: 'hidden',
-        transition: 'all 0.3s ease',
-         backgroundColor: 'transparent',
-        '&:hover': {
-          transform: 'translateY(-4px)',
-          boxShadow: '0 12px 24px rgba(0, 0, 0, 0.2)',
-        }
-      }}
-    >
-      {/* Background Image with Overlay */}
-      <Box
-        sx={{
-          position: 'absolute',
-          top: 0,
-          left: 0,
-          right: 0,
-          bottom: 0,
-          backgroundImage: `url(${trip.image})`,
-          backgroundSize: 'cover',
-          backgroundPosition: 'center',
-          zIndex: -2,
-          '&::before': {
-            content: '""',
-            position: 'absolute',
-            top: 0,
-            left: 0,
-            right: 0,
-            bottom: 0,
-            background: 'linear-gradient(to bottom, rgba(0, 0, 0, 0.15), rgba(0, 0, 0, 0.73))',
-            
+    <>
+      <Card 
+        sx={{ 
+          width: '100%',
+          height: '100%',
+          display: 'flex',
+          flexDirection: 'column',
+          borderRadius: 3,
+          overflow: 'hidden',
+          transition: 'all 0.3s ease',
+          boxShadow: '0 4px 12px rgba(0,0,0,0.1)',
+          backgroundColor: colors.darkKhakhi[200],
+          '&:hover': {
+            transform: 'translateY(-4px)',
+            boxShadow: '0 12px 24px rgba(0,0,0,0.15)',
           }
         }}
-      />
-
-      {/* Admin Actions Overlay */}
-      <Box sx={{ 
-        position: 'absolute', 
-        top: 12, 
-        right: 12, 
-        display: 'flex', 
-        gap: 1,
-        zIndex: 2 
-      }}>
-        <IconButton
-          size="small"
-          onClick={() => onPreview(trip)}
-          sx={{
-            backgroundColor: 'rgba(255, 255, 255, 0.2)',
-            backdropFilter: 'blur(10px)',
-            color: 'white',
-            '&:hover': {
-              backgroundColor: 'rgba(255, 255, 255, 0.3)',
-            }
-          }}
-        >
-          <FiEye size={16} />
-        </IconButton>
-        <IconButton
-          size="small"
-          onClick={() => onEdit(trip)}
-          sx={{
-            backgroundColor: 'rgba(59, 130, 246, 0.2)',
-            backdropFilter: 'blur(10px)',
-            color: 'white',
-            '&:hover': {
-              backgroundColor: 'rgba(59, 130, 246, 0.3)',
-            }
-          }}
-        >
-          <FiEdit size={16} />
-        </IconButton>
-        <IconButton
-          size="small"
-          onClick={() => onDelete(trip)}
-          sx={{
-            backgroundColor: 'rgba(239, 68, 68, 0.2)',
-            backdropFilter: 'blur(10px)',
-            color: 'white',
-            '&:hover': {
-              backgroundColor: 'rgba(239, 68, 68, 0.3)',
-            }
-          }}
-        >
-          <FiTrash2 size={16} />
-        </IconButton>
-      </Box>
-
-      {/* Content Container */}
-      <CardContent sx={{ 
-        height: '100%', 
-        p: 3, 
-        display: 'flex', 
-        flexDirection: 'column',
-        justifyContent: 'flex-end',
-        color: 'white'
-      }}>
-        {/* Top Section - Duration & Rating */}
-        <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', mb: 2 }}>
-          <Box>
-            <Typography 
-              variant="h3" 
-              sx={{ 
-                fontWeight: 800,
-                fontSize: '32px',
-                lineHeight: 1,
-                color: colors.wheat[300],
-                mb: 0.5
+      >
+        {/* Image at the top */}
+        <Box sx={{ position: 'relative', height: 200, overflow: 'hidden' }}>
+          <CardMedia
+            component="img"
+            image={trip.image || 'https://via.placeholder.com/400x200'}
+            alt={trip.title}
+            sx={{
+              height: '100%',
+              width: '100%',
+              objectFit: 'cover',
+              transition: 'transform 0.3s ease',
+              '&:hover': {
+                transform: 'scale(1.05)',
+              }
+            }}
+          />
+          
+          {/* Admin Actions Overlay */}
+          <Box sx={{ 
+            position: 'absolute', 
+            top: 12, 
+            right: 12, 
+            display: 'flex', 
+            gap: 1,
+            zIndex: 2 
+          }}>
+            <IconButton
+              size="small"
+              onClick={() => onPreview(trip)}
+              sx={{
+                backgroundColor: 'rgba(255, 255, 255, 0.9)',
+                color: colors.darkKhakhi[700],
+                '&:hover': {
+                  backgroundColor: 'white',
+                }
               }}
             >
-              {trip.duration} Days
-            </Typography>
-            
-            {/* Rating */}
-            <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-              <AiFillStar style={{ color: colors.wheat[400], fontSize: 18 }} />
-              <Typography 
-                variant="body2" 
-                sx={{ 
-                  fontWeight: 600,
-                  fontSize: '16px',
-                  color: colors.wheat[200]
-                }}
-              >
-                {trip.rating}
-              </Typography>
-            </Box>
+              <FiEye size={16} />
+            </IconButton>
+            <IconButton
+              size="small"
+              onClick={handleEdit}
+              sx={{
+                backgroundColor: 'rgba(59, 130, 246, 0.9)',
+                color: 'white',
+                '&:hover': {
+                  backgroundColor: '#3b82f6',
+                }
+              }}
+            >
+              <FiEdit size={16} />
+            </IconButton>
+            <IconButton
+              size="small"
+              onClick={() => onDelete(trip)}
+              sx={{
+                backgroundColor: 'rgba(239, 68, 68, 0.9)',
+                color: 'white',
+                '&:hover': {
+                  backgroundColor: '#ef4444',
+                }
+              }}
+            >
+              <FiTrash2 size={16} />
+            </IconButton>
           </Box>
         </Box>
 
-        {/* Divider Line */}
-        <Box 
-          sx={{ 
-            width: '100%', 
-            height: '2px', 
-            background: `linear-gradient(90deg, transparent, ${colors.wheat[400]}, transparent)`,
-            my: 2,
-            opacity: 0.5
-          }} 
-        />
-
-        {/* Dates */}
-        <Box sx={{ display: 'flex', alignItems: 'center', mb: 2 }}>
-          <FiCalendar style={{ fontSize: 18, marginRight: 8, color: colors.wheat[300] }} />
+        {/* Content Section */}
+        <CardContent sx={{ flexGrow: 1, p: 3 }}>
+          {/* Title */}
           <Typography 
-            variant="body2" 
-            sx={{ 
-              fontWeight: 500,
-              fontSize: '15px',
-              letterSpacing: '0.5px',
-              color: colors.wheat[200]
-            }}
-          >
-            {formatDateRange(trip.startDate, trip.endDate)}
-          </Typography>
-        </Box>
-
-        {/* Title and Price */}
-        <Box sx={{ mb: 2 }}>
-          <Typography 
-            variant="h5" 
+            variant="h6" 
             sx={{ 
               fontWeight: 700,
-              fontSize: '22px',
-              lineHeight: 1.3,
+              fontSize: '1.25rem',
               mb: 1,
-              color: 'white'
+              color: colors.darkKhakhi[900],
+              lineHeight: 1.3,
+              height: '3.5rem',
+              overflow: 'hidden',
+              display: '-webkit-box',
+              WebkitLineClamp: 2,
+              WebkitBoxOrient: 'vertical',
             }}
           >
             {trip.title}
           </Typography>
-          
-          <Typography 
-            variant="h4" 
-            sx={{ 
-              fontWeight: 800,
-              fontSize: '28px',
-              lineHeight: 1,
-              color: colors.wheat[400]
-            }}
-          >
-            {formatPrice(trip.price)}
-          </Typography>
-        </Box>
 
-        {/* Location and Actions */}
-        <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-          <Chip
-            label={trip.location}
-            size="small"
-            sx={{
-              backgroundColor: 'rgba(255, 255, 255, 0.2)',
-              backdropFilter: 'blur(10px)',
-              color: 'white',
-              border: '1px solid rgba(255, 255, 255, 0.3)',
-              fontWeight: 500,
-              fontSize: '12px'
-            }}
-          />
-          
-          {/* <Button
-            size="small"
-            variant="contained"
-            onClick={() => onPreview(trip)}
-            sx={{
-              backgroundColor: 'rgba(255, 255, 255, 0.2)',
-              backdropFilter: 'blur(10px)',
-              border: '1px solid rgba(255, 255, 255, 0.3)',
-              color: 'white',
-              fontSize: '12px',
-              py: 0.5,
-              px: 2,
-              '&:hover': {
-                backgroundColor: 'rgba(255, 255, 255, 0.3)',
-              }
+          {/* Location with icon */}
+          <Box sx={{ display: 'flex', alignItems: 'center', mb: 2 }}>
+            <FiMapPin style={{ fontSize: 14, marginRight: 6, color: colors.oliveWood[500] }} />
+            <Typography 
+              variant="body2" 
+              sx={{ 
+                color: colors.darkKhakhi[600],
+                fontWeight: 500
+              }}
+            >
+              {trip.location}
+            </Typography>
+          </Box>
+
+          <Divider sx={{ my: 1.5 }} />
+
+          {/* Date Range */}
+          <Box sx={{ display: 'flex', alignItems: 'center', mb: 2 }}>
+            <FiCalendar style={{ fontSize: 14, marginRight: 6, color: colors.oliveWood[500] }} />
+            <Typography 
+              variant="body2" 
+              sx={{ 
+                color: colors.darkKhakhi[700],
+                fontWeight: 500
+              }}
+            >
+              {formatDateRange(trip.startDate, trip.endDate)}
+            </Typography>
+          </Box>
+
+          {/* Price */}
+          <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mt: 2 }}>
+            <Typography 
+              variant="h6" 
+              sx={{ 
+                fontWeight: 700,
+                fontSize: '1.5rem',
+                color: colors.oliveWood[600]
+              }}
+            >
+              {formatPrice(trip.price)}
+            </Typography>
+            
+            <Chip
+              label={trip.location.split(',')[0]} // First part of location as tag
+              size="small"
+              sx={{
+                backgroundColor: colors.oliveWood[100],
+                color: colors.oliveWood[800],
+                fontWeight: 500,
+                fontSize: '0.75rem'
+              }}
+            />
+          </Box>
+
+          {/* Description preview */}
+          <Typography 
+            variant="body2" 
+            sx={{ 
+              mt: 2,
+              color: colors.darkKhakhi[600],
+              overflow: 'hidden',
+              display: '-webkit-box',
+              WebkitLineClamp: 2,
+              WebkitBoxOrient: 'vertical',
+              fontSize: '0.875rem',
+              lineHeight: 1.5
             }}
           >
-            Preview
-          </Button> */}
-        </Box>
-      </CardContent>
-    </Card>
+            {trip.description}
+          </Typography>
+        </CardContent>
+      </Card>
+
+      {/* Edit Modal */}
+      <Dialog 
+        open={editModalOpen} 
+        onClose={handleCloseModal}
+        maxWidth="md"
+        fullWidth
+        PaperProps={{
+          sx: {
+            borderRadius: 3,
+          }
+        }}
+      >
+        <DialogContent sx={{ p: 3  }}>
+          <AdminTripForm
+          formMode='edit'
+            trip={trip}
+            onCancel={handleCloseModal}
+            onSuccess={handleUpdateSuccess}
+          />
+        </DialogContent>
+      </Dialog>
+    </>
   );
 };
 

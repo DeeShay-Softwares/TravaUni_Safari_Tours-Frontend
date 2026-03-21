@@ -14,7 +14,7 @@ const DeleteModal: React.FC<DeleteModalProps> = ({
   onClose,
   onConfirm,
   title = "Confirm Delete",
-  message = "Are you sure you want to delete this item?"
+  message,
 }) => {
   return (
     <Modal

@@ -1,34 +1,51 @@
-// src/types/index.ts
-export interface Trip {
-  id: string;
-  title: string;
-  duration: number;
-  price: number;
-  startDate: string;
-  endDate: string;
-  rating: number;
-  image: string;
-  description: string;
-  location: string;
-  reviewCount: number;
-}
+// In your types file (../types)
+// export interface Trip {
+//   id: string;
+//   title: string;
+//   duration: number;
+//   price: number;
+//   startDate: string;
+//   endDate: string;
+//   image: string;
+//   description: string;
+//   location: string;
+//   packages: string[]; // New field for packages/activities
+// }
 
 export interface TripCardProps {
-  trip: Trip;
+  trip: TripInput;
   onClick?: () => void;
   className: string;
 }
 
 export interface TripDetailsModalProps {
-  trip: Trip | null;
+  trip: TripInput | null;
   open: boolean;
   onClose: () => void;
 }
 
+// export interface AdminTripFormProps {
+//   trip: Trip | null;
+//   onSubmit: (tripData: Trip) => void;
+//   onCancel: () => void;
+// }
+
+export interface TripInput {
+  title: string;
+  location: string;
+  price: number;
+  startDate: string;
+  endDate: string;
+  image: string;
+  description: string;
+}
+
 export interface AdminTripFormProps {
-  trip: Trip | null;
-  onSubmit: (tripData: Trip) => void;
+  trip?: TripInput & { id?: string };
   onCancel: () => void;
+  onSuccess?: () => void;
+  loading?: boolean;
+  formMode: "create" | "edit";
 }
 
 export interface SnackbarState {
