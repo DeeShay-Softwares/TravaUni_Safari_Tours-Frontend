@@ -13,9 +13,9 @@ import {
   useMediaQuery
 } from '@mui/material';
 import { FiX, FiCalendar, FiMapPin } from 'react-icons/fi';
-import { AiFillStar } from 'react-icons/ai';
+//import { AiFillStar } from 'react-icons/ai';
 import type { TripDetailsModalProps } from '../types';
-import { colors } from '../assets/constants/Theme';
+import { colors } from '../assets/constants/theme';
 
 /**
  * TripDetailsPanel Component - Displays detailed information about a trip in a side panel
@@ -115,7 +115,7 @@ const TripDetailsPanel: React.FC<TripDetailsModalProps> = ({ trip, open, onClose
                 {trip.title}
               </Typography>
               <Chip
-                label={`${trip.duration} Days`}
+                label={`UniTours Trip`}
                 color="primary"
                 size="small"
                 sx={{ mt: 1 }}
@@ -168,7 +168,7 @@ const TripDetailsPanel: React.FC<TripDetailsModalProps> = ({ trip, open, onClose
                 </Typography>
 
                 {/* Rating */}
-                <Box sx={{ display: 'flex', alignItems: 'center', mb: 3 }}>
+                {/* <Box sx={{ display: 'flex', alignItems: 'center', mb: 3 }}>
                   <AiFillStar style={{ color: colors.wheat[500], fontSize: 20, marginRight: 4 }} />
                   <Typography variant="h6" sx={{ fontWeight: 600, mr: 1 }}>
                     {trip.rating}
@@ -176,7 +176,7 @@ const TripDetailsPanel: React.FC<TripDetailsModalProps> = ({ trip, open, onClose
                   <Typography variant="body2" color="text.secondary">
                     ({trip.reviewCount} reviews)
                   </Typography>
-                </Box>
+                </Box> */}
               </Box>
 
               {/* Right Column - Booking Information */}
@@ -218,14 +218,14 @@ const TripDetailsPanel: React.FC<TripDetailsModalProps> = ({ trip, open, onClose
                   </Box>
 
                   {/* Duration */}
-                  <Box sx={{ display: 'flex', alignItems: 'center', mb: 2 }}>
+                  {/* <Box sx={{ display: 'flex', alignItems: 'center', mb: 2 }}>
                     <Typography variant="body2" fontWeight={600} sx={{ mr: 2 }}>
                       Duration:
                     </Typography>
                     <Typography variant="body2" color="text.secondary">
                       {trip.duration} days
                     </Typography>
-                  </Box>
+                  </Box> */}
 
                   {/* Location */}
                   {trip.location && (

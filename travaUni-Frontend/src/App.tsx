@@ -1,11 +1,11 @@
 import "./App.css";
 import ViewAllTripsPage from "./pages/ViewAllTripsPage";
-import AdminPage from "./pages/AdminPage";
+import AdminPage from "./pages/AdminDashboard";
 import { Routes, Route, Navigate } from "react-router-dom"; // Added BrowserRouter
 import { HeroPage } from "./pages/HeroPage";
 import { ThemeProvider } from "@mui/material/styles";
 import CssBaseline from "@mui/material/CssBaseline";
-import { theme } from "./assets/constants/Theme";
+import { theme } from "./assets/constants/theme";
 import { HomePage } from "./pages/HomePage";
 import ViewTripGallery from "./components/ViewTripGallery";
 import ViewBookedTripsPage from "./pages/ViewBookedTripsPage";

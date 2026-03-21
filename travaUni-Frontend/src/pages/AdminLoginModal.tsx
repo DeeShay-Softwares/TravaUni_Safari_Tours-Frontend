@@ -61,6 +61,7 @@ const AdminLoginModal: React.FC<AdminLoginModalProps> = ({ open, onClose }) => {
           },
         );
         localStorage.setItem("token", response.token);
+        
         localStorage.setItem("user", JSON.stringify(response.user));
 
         onClose();
@@ -88,7 +89,7 @@ const AdminLoginModal: React.FC<AdminLoginModalProps> = ({ open, onClose }) => {
 
         const statusCode = axiosError.response?.status || 500;
 
-        if (statusCode === 401) {
+        if (statusCode === 401 || statusCode === 400) {
           errorMessage = "Invalid credentials. Please try again.";
         } else if (statusCode === 429) {
           errorMessage = "Too many attempts. Try again after 30 minutes";
