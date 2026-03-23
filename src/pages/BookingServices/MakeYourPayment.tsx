@@ -248,7 +248,7 @@ export default function PaymentDetails({ bookingData, onPaymentComplete }: Payme
                   </Box>
                 }
                 sx={{ m: 0, width: '100%' }}
-              
+              />
               
               <FormControlLabel
                 value="credit"
