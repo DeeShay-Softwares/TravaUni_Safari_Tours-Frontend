@@ -1,24 +1,33 @@
-// TravelerDetails.tsx - Step 3 with multi-traveler support
+// TravelerDetails.tsx - Step 3
 import {
   Box, Typography, TextField, MenuItem, FormControl,
   InputLabel, Select, IconButton, Button,
+  InputAdornment,
 } from '@mui/material';
 import type { SelectChangeEvent } from '@mui/material';
 import {
   FaUser, FaEnvelope, FaPhone, FaIdCard, FaVenusMars,
-  FaGraduationCap, FaPlus, FaTrash, FaUsers
+  FaGraduationCap, FaPlus, FaTrash, FaUsers,
+  FaGlobe, FaCalendar,
 } from 'react-icons/fa6';
-import { FaInfoCircle } from 'react-icons/fa';
+import { FaInfoCircle, FaFileAlt } from 'react-icons/fa';
 import { Theme } from '@/assets/constants/colors';
 import { useState, useMemo, useCallback } from 'react';
 
-// ─── Types ────────────────────────────────────────────────────────────────────
+// ─── Types ─────────────────────────────────────────────────────────────────────
+// Mirrors ITraveler from the backend exactly.
+// `age` is derived from `dateOfBirth` — never stored separately.
+
+export type Gender   = 'male' | 'female' | 'other' | 'prefer-not-to-say';
+export type IdType   = 'passport' | 'national-id' | 'driver-license';
 
 export interface Traveler {
-  id: string;
+  id: string;           // local form key only — not sent to backend
   fullName: string;
-  age: string;
-  gender: string;
+  dateOfBirth: string;  // ISO string — backend converts to Date
+  gender: Gender | '';
+  nationality: string;
+  idType: IdType | '';
   idNumber: string;
   isStudent: boolean;
   schoolName: string;
@@ -27,6 +36,7 @@ export interface Traveler {
 export interface TravelerInfo {
   email: string;
   phone: string;
+  specialRequest: string;   // one per booking, not per traveler
   mainTraveler: Traveler;
   additionalTravelers: Traveler[];
 }
@@ -36,27 +46,54 @@ interface TravelerDetailsProps {
   initialData?: TravelerInfo | null;
 }
 
-// ─── Helpers ──────────────────────────────────────────────────────────────────
+// ─── ID type config ────────────────────────────────────────────────────────────
+// Add new doc types here — dropdown and placeholder update automatically.
+
+const ID_TYPES: { value: IdType; label: string; placeholder: string }[] = [
+  { value: 'passport',        label: 'Passport',         placeholder: 'e.g. A12345678' },
+  { value: 'national-id',     label: 'National ID',      placeholder: 'e.g. 123456/78/1' },
+  { value: 'driver-license',  label: "Driver's Licence", placeholder: 'e.g. DL-123456' },
+];
+
+// ─── Helpers ───────────────────────────────────────────────────────────────────
 
 const emptyTraveler = (id = 'main'): Traveler => ({
   id,
   fullName: '',
-  age: '',
+  dateOfBirth: '',
   gender: '',
+  nationality: '',
+  idType: '',
   idNumber: '',
   isStudent: false,
   schoolName: '',
 });
 
+/** Derive age from ISO date string — keeps it in sync with DOB automatically */
+function ageFromDOB(dob: string): number | null {
+  if (!dob) return null;
+  const birth = new Date(dob);
+  if (isNaN(birth.getTime())) return null;
+  const today = new Date();
+  let age = today.getFullYear() - birth.getFullYear();
+  const m = today.getMonth() - birth.getMonth();
+  if (m < 0 || (m === 0 && today.getDate() < birth.getDate())) age--;
+  return age;
+}
+
+/** Max date for the DOB picker — today */
+const TODAY_ISO = new Date().toISOString().split('T')[0];
+
+/** Earliest allowed DOB — 120 years ago */
+const MIN_DOB = new Date(new Date().getFullYear() - 120, 0, 1).toISOString().split('T')[0];
+
 const isTravelerValid = (t: Traveler) =>
-  Boolean(t.fullName && t.age && t.gender && t.idNumber);
+  Boolean(t.fullName && t.dateOfBirth && t.gender && t.nationality && t.idType && t.idNumber);
 
-const isEmailValid = (email: string) =>
-  /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
-
+const isEmailValid = (email: string) => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
 const isPhoneValid = (phone: string) => phone.length >= 10;
 
-// ─── Shared field styles ──────────────────────────────────────────────────────
+// ─── Shared styles ─────────────────────────────────────────────────────────────
 
 const fieldSx = {
   '& .MuiOutlinedInput-root': {
@@ -77,9 +114,9 @@ const labelSx = {
   '&.Mui-focused': { color: Theme['olive-wood'][500] },
 };
 
-const iconStyle = { marginRight: 10, color: Theme.bronze[500] };
+const iconStyle = { color: Theme.bronze[500] };
 
-// ─── TravelerForm sub-component ───────────────────────────────────────────────
+// ─── TravelerForm sub-component ────────────────────────────────────────────────
 
 interface TravelerFormProps {
   traveler: Traveler;
@@ -90,22 +127,20 @@ interface TravelerFormProps {
 }
 
 function TravelerForm({ traveler, isMain, index, onChange, onRemove }: TravelerFormProps) {
+  const derivedAge  = ageFromDOB(traveler.dateOfBirth);
+  const idConfig    = ID_TYPES.find(t => t.value === traveler.idType);
+
   return (
     <Box sx={{
-      p: 3,
-      mb: 3,
+      p: 3, mb: 3,
       border: `1px solid ${Theme.bronze[200]}`,
       borderRadius: 3,
       backgroundColor: isMain ? Theme.wheat[50] : 'white',
     }}>
-      {/* Header */}
+      {/* ── Header ── */}
       <Box sx={{
-        display: 'flex',
-        justifyContent: 'space-between',
-        alignItems: 'center',
-        mb: 3,
-        pb: 2,
-        borderBottom: `2px solid ${Theme.bronze[200]}`,
+        display: 'flex', justifyContent: 'space-between', alignItems: 'center',
+        mb: 3, pb: 2, borderBottom: `2px solid ${Theme.bronze[200]}`,
       }}>
         <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
           <Box sx={{
@@ -115,48 +150,54 @@ function TravelerForm({ traveler, isMain, index, onChange, onRemove }: TravelerF
           }}>
             <FaUsers size={20} color={Theme.bronze[600]} />
           </Box>
-          <Typography variant="h6" sx={{ fontWeight: 600, color: Theme.bronze[700] }}>
-            {isMain ? 'Main Traveler' : `Traveler ${index}`}
-          </Typography>
+          <Box>
+            <Typography variant="h6" sx={{ fontWeight: 600, color: Theme.bronze[700], lineHeight: 1.2 }}>
+              {isMain ? 'Main Traveler' : `Traveler ${index}`}
+            </Typography>
+            {derivedAge !== null && (
+              <Typography sx={{ color: Theme['dark-khakhi'][500], fontSize: '12px' }}>
+                Age: {derivedAge} years old
+              </Typography>
+            )}
+          </Box>
         </Box>
         {!isMain && onRemove && (
           <IconButton
             onClick={onRemove}
             aria-label="Remove traveler"
-            sx={{
-              color: Theme.bronze[600],
-              '&:hover': { backgroundColor: Theme.bronze[100], color: Theme.bronze[800] },
-            }}
+            sx={{ color: Theme.bronze[600], '&:hover': { backgroundColor: Theme.bronze[100], color: Theme.bronze[800] } }}
           >
             <FaTrash />
           </IconButton>
         )}
       </Box>
 
-      {/* Fields */}
-      <Box sx={{
-        display: 'grid',
-        gridTemplateColumns: { xs: '1fr', sm: 'repeat(2, 1fr)', md: 'repeat(3, 1fr)' },
-        gap: 3,
-      }}>
-        <TextField
-          fullWidth required
-          label="Full Name"
-          placeholder="Enter full name as per ID"
-          value={traveler.fullName}
-          onChange={(e) => onChange('fullName', e.target.value)}
-          InputProps={{ startAdornment: <FaUser style={iconStyle} /> }}
-          sx={fieldSx}
-        />
+      {/* ── Section: Personal Details ── */}
+      <Typography sx={{ color: Theme['dark-khakhi'][600], fontSize: '12px', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.8px', mb: 2 }}>
+        Personal Details
+      </Typography>
+      <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', sm: 'repeat(2, 1fr)', md: 'repeat(3, 1fr)' }, gap: 3, mb: 3 }}>
 
         <TextField
           fullWidth required
-          label="Age"
-          type="number"
-          placeholder="Enter age"
-          value={traveler.age}
-          onChange={(e) => onChange('age', e.target.value)}
-          InputProps={{ startAdornment: <FaIdCard style={iconStyle} /> }}
+          label="Full Name"
+          placeholder="As it appears on your ID"
+          value={traveler.fullName}
+          onChange={(e) => onChange('fullName', e.target.value)}
+          InputProps={{ startAdornment: <InputAdornment position="start"><FaUser style={iconStyle} /></InputAdornment> }}
+          sx={fieldSx}
+        />
+
+        {/* Date of Birth — age auto-derived, not a separate input */}
+        <TextField
+          fullWidth required
+          label="Date of Birth"
+          type="date"
+          value={traveler.dateOfBirth}
+          onChange={(e) => onChange('dateOfBirth', e.target.value)}
+          inputProps={{ max: TODAY_ISO, min: MIN_DOB }}
+          InputLabelProps={{ shrink: true }}
+          InputProps={{ startAdornment: <InputAdornment position="start"><FaCalendar style={iconStyle} /></InputAdornment> }}
           sx={fieldSx}
         />
 
@@ -166,7 +207,7 @@ function TravelerForm({ traveler, isMain, index, onChange, onRemove }: TravelerF
             value={traveler.gender}
             label="Gender"
             onChange={(e: SelectChangeEvent) => onChange('gender', e.target.value)}
-            startAdornment={<FaVenusMars style={iconStyle} />}
+            startAdornment={<InputAdornment position="start"><FaVenusMars style={iconStyle} /></InputAdornment>}
             sx={selectSx}
           >
             <MenuItem value="male">Male</MenuItem>
@@ -178,25 +219,70 @@ function TravelerForm({ traveler, isMain, index, onChange, onRemove }: TravelerF
 
         <TextField
           fullWidth required
-          label="ID / Passport Number"
-          placeholder="Enter ID or passport number"
+          label="Nationality"
+          placeholder="e.g. Zambian"
+          value={traveler.nationality}
+          onChange={(e) => onChange('nationality', e.target.value)}
+          InputProps={{ startAdornment: <InputAdornment position="start"><FaGlobe style={iconStyle} /></InputAdornment> }}
+          sx={{ ...fieldSx, gridColumn: { xs: 'span 1', sm: 'span 2', md: 'span 1' } }}
+        />
+      </Box>
+
+      {/* ── Section: Identity Document ── */}
+      <Typography sx={{ color: Theme['dark-khakhi'][600], fontSize: '12px', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.8px', mb: 2 }}>
+        Identity Document
+      </Typography>
+      <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', sm: 'repeat(2, 1fr)' }, gap: 3, mb: 3 }}>
+
+        {/* ID type selector */}
+        <FormControl fullWidth required>
+          <InputLabel sx={labelSx}>Document Type</InputLabel>
+          <Select
+            value={traveler.idType}
+            label="Document Type"
+            onChange={(e: SelectChangeEvent) => {
+              onChange('idType', e.target.value);
+              onChange('idNumber', ''); // clear number when type changes
+            }}
+            startAdornment={<InputAdornment position="start"><FaFileAlt style={iconStyle} /></InputAdornment>}
+            sx={selectSx}
+          >
+            {ID_TYPES.map(({ value, label }) => (
+              <MenuItem key={value} value={value}>{label}</MenuItem>
+            ))}
+          </Select>
+        </FormControl>
+
+        {/* ID number — placeholder adapts to selected type */}
+        <TextField
+          fullWidth required
+          label={idConfig ? `${idConfig.label} Number` : 'Document Number'}
+          placeholder={idConfig?.placeholder ?? 'Select document type first'}
           value={traveler.idNumber}
           onChange={(e) => onChange('idNumber', e.target.value)}
-          InputProps={{ startAdornment: <FaIdCard style={iconStyle} /> }}
+          disabled={!traveler.idType}
+          InputProps={{ startAdornment: <InputAdornment position="start"><FaIdCard style={iconStyle} /></InputAdornment> }}
           sx={fieldSx}
         />
+      </Box>
+
+      {/* ── Section: Student Status ── */}
+      <Typography sx={{ color: Theme['dark-khakhi'][600], fontSize: '12px', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.8px', mb: 2 }}>
+        Student Status
+      </Typography>
+      <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', sm: 'repeat(2, 1fr)' }, gap: 3 }}>
 
         <FormControl fullWidth>
-          <InputLabel sx={labelSx}>Student Status (Optional)</InputLabel>
+          <InputLabel sx={labelSx}>Are you a student? (Optional)</InputLabel>
           <Select
             value={traveler.isStudent ? 'yes' : 'no'}
-            label="Student Status (Optional)"
+            label="Are you a student? (Optional)"
             onChange={(e: SelectChangeEvent) => {
               const student = e.target.value === 'yes';
               onChange('isStudent', student);
               if (!student) onChange('schoolName', '');
             }}
-            startAdornment={<FaGraduationCap style={iconStyle} />}
+            startAdornment={<InputAdornment position="start"><FaGraduationCap style={iconStyle} /></InputAdornment>}
             sx={selectSx}
           >
             <MenuItem value="no">No</MenuItem>
@@ -208,10 +294,10 @@ function TravelerForm({ traveler, isMain, index, onChange, onRemove }: TravelerF
           <TextField
             fullWidth
             label="School / University Name"
-            placeholder="Enter school or university name"
+            placeholder="Enter your institution's name"
             value={traveler.schoolName}
             onChange={(e) => onChange('schoolName', e.target.value)}
-            InputProps={{ startAdornment: <FaGraduationCap style={iconStyle} /> }}
+            InputProps={{ startAdornment: <InputAdornment position="start"><FaGraduationCap style={iconStyle} /></InputAdornment> }}
             sx={fieldSx}
           />
         )}
@@ -220,49 +306,49 @@ function TravelerForm({ traveler, isMain, index, onChange, onRemove }: TravelerF
   );
 }
 
-// ─── Main Component ───────────────────────────────────────────────────────────
+// ─── Main Component ────────────────────────────────────────────────────────────
 
 const MAX_TRAVELERS = 6;
 
 export default function TravelerDetails({ onTravelerInfoSubmit, initialData }: TravelerDetailsProps) {
   const [formData, setFormData] = useState<TravelerInfo>(() => ({
-    email: initialData?.email ?? '',
-    phone: initialData?.phone ?? '',
-    mainTraveler: initialData?.mainTraveler ?? emptyTraveler('main'),
-    additionalTravelers: initialData?.additionalTravelers ?? [],
+    email:                initialData?.email                ?? '',
+    phone:                initialData?.phone                ?? '',
+    specialRequest:       initialData?.specialRequest       ?? '',
+    mainTraveler:         initialData?.mainTraveler         ?? emptyTraveler('main'),
+    additionalTravelers:  initialData?.additionalTravelers  ?? [],
   }));
 
-  // ── Derived validation (single source of truth) ──────────────────────────
+  const totalTravelers = formData.additionalTravelers.length + 1;
+
+  // ── Validation ───────────────────────────────────────────────────────────────
 
   const validation = useMemo(() => {
-    const mainValid = isTravelerValid(formData.mainTraveler);
-    const addlValid = formData.additionalTravelers.every(isTravelerValid);
-    const emailOk   = isEmailValid(formData.email);
-    const phoneOk   = isPhoneValid(formData.phone);
-    const isValid   = mainValid && addlValid && emailOk && phoneOk;
+    const mainValid  = isTravelerValid(formData.mainTraveler);
+    const addlValid  = formData.additionalTravelers.every(isTravelerValid);
+    const emailOk    = isEmailValid(formData.email);
+    const phoneOk    = isPhoneValid(formData.phone);
+    const isValid    = mainValid && addlValid && emailOk && phoneOk;
 
     const missing: string[] = [];
-    if (!emailOk)                          missing.push('valid email');
-    if (!phoneOk)                          missing.push('valid phone');
-    if (!formData.mainTraveler.fullName)   missing.push('main traveler name');
-    if (!formData.mainTraveler.age)        missing.push('main traveler age');
-    if (!formData.mainTraveler.gender)     missing.push('main traveler gender');
-    if (!formData.mainTraveler.idNumber)   missing.push('main traveler ID');
+    if (!emailOk)                              missing.push('valid email');
+    if (!phoneOk)                              missing.push('valid phone');
+    if (!formData.mainTraveler.fullName)       missing.push('main traveler name');
+    if (!formData.mainTraveler.dateOfBirth)    missing.push('date of birth');
+    if (!formData.mainTraveler.gender)         missing.push('gender');
+    if (!formData.mainTraveler.nationality)    missing.push('nationality');
+    if (!formData.mainTraveler.idType)         missing.push('document type');
+    if (!formData.mainTraveler.idNumber)       missing.push('document number');
     if (!addlValid && formData.additionalTravelers.length)
       missing.push('all additional traveler details');
 
     return { isValid, missing };
   }, [formData]);
 
-  const totalTravelers = formData.additionalTravelers.length + 1;
-
-  // ── Handlers ─────────────────────────────────────────────────────────────
+  // ── Handlers ─────────────────────────────────────────────────────────────────
 
   const updateMainTraveler = useCallback((field: keyof Traveler, value: string | boolean) => {
-    setFormData(prev => ({
-      ...prev,
-      mainTraveler: { ...prev.mainTraveler, [field]: value },
-    }));
+    setFormData(prev => ({ ...prev, mainTraveler: { ...prev.mainTraveler, [field]: value } }));
   }, []);
 
   const updateAdditionalTraveler = useCallback((id: string, field: keyof Traveler, value: string | boolean) => {
@@ -278,7 +364,10 @@ export default function TravelerDetails({ onTravelerInfoSubmit, initialData }: T
     if (totalTravelers >= MAX_TRAVELERS) return;
     setFormData(prev => ({
       ...prev,
-      additionalTravelers: [...prev.additionalTravelers, emptyTraveler(Date.now().toString())],
+      additionalTravelers: [
+        ...prev.additionalTravelers,
+        emptyTraveler(`${Date.now()}-${Math.random()}`),
+      ],
     }));
   }, [totalTravelers]);
 
@@ -293,41 +382,24 @@ export default function TravelerDetails({ onTravelerInfoSubmit, initialData }: T
     const target = parseInt(value, 10);
     if (isNaN(target)) return;
     const delta = target - totalTravelers;
-
     if (delta > 0) {
-      const newTravelers = Array.from({ length: delta }, () =>
-        emptyTraveler(Date.now().toString() + Math.random())
+      const newOnes = Array.from({ length: delta }, () =>
+        emptyTraveler(`${Date.now()}-${Math.random()}`)
       );
-      setFormData(prev => ({
-        ...prev,
-        additionalTravelers: [...prev.additionalTravelers, ...newTravelers],
-      }));
+      setFormData(prev => ({ ...prev, additionalTravelers: [...prev.additionalTravelers, ...newOnes] }));
     } else if (delta < 0) {
-      setFormData(prev => ({
-        ...prev,
-        additionalTravelers: prev.additionalTravelers.slice(0, target - 1),
-      }));
+      setFormData(prev => ({ ...prev, additionalTravelers: prev.additionalTravelers.slice(0, target - 1) }));
     }
   }, [totalTravelers]);
 
-  // ── Submit handler (explicit button, not auto-submit on every keystroke) ──
-
   const handleSubmit = () => {
-    if (validation.isValid && onTravelerInfoSubmit) {
-      onTravelerInfoSubmit(formData);
-    }
+    if (validation.isValid) onTravelerInfoSubmit?.(formData);
   };
 
-  // ─────────────────────────────────────────────────────────────────────────
+  // ─────────────────────────────────────────────────────────────────────────────
 
   return (
-    <Box sx={{
-      height: '100%',
-      display: 'flex',
-      flexDirection: 'column',
-      gap: 3,
-      p: { xs: 2, sm: 3, md: 4 },
-    }}>
+    <Box sx={{ height: '100%', display: 'flex', flexDirection: 'column', gap: 3, p: { xs: 2, sm: 3, md: 4 } }}>
       {/* Header */}
       <Box>
         <Typography variant="h4" sx={{ color: Theme.bronze[700], fontWeight: 600, mb: 1 }}>
@@ -338,15 +410,11 @@ export default function TravelerDetails({ onTravelerInfoSubmit, initialData }: T
         </Typography>
       </Box>
 
-      {/* Contact Info */}
+      {/* ── Contact Information ── */}
       <Box sx={{ p: 3, border: `1px solid ${Theme.bronze[200]}`, borderRadius: 3, backgroundColor: Theme.wheat[50] }}>
-        <Typography variant="h6" sx={{
-          fontWeight: 600, color: Theme.bronze[700], mb: 3,
-          display: 'flex', alignItems: 'center', gap: 1,
-        }}>
+        <Typography variant="h6" sx={{ fontWeight: 600, color: Theme.bronze[700], mb: 3, display: 'flex', alignItems: 'center', gap: 1 }}>
           <FaEnvelope /> Contact Information
         </Typography>
-
         <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', sm: '1fr 1fr' }, gap: 3 }}>
           <TextField
             fullWidth required
@@ -357,33 +425,48 @@ export default function TravelerDetails({ onTravelerInfoSubmit, initialData }: T
             onChange={(e) => setFormData(prev => ({ ...prev, email: e.target.value }))}
             error={formData.email !== '' && !isEmailValid(formData.email)}
             helperText={formData.email !== '' && !isEmailValid(formData.email) ? 'Please enter a valid email address' : ''}
-            InputProps={{ startAdornment: <FaEnvelope style={iconStyle} /> }}
+            InputProps={{ startAdornment: <InputAdornment position="start"><FaEnvelope style={iconStyle} /></InputAdornment> }}
             sx={fieldSx}
           />
-
           <TextField
             fullWidth required
             label="Phone Number"
-            placeholder="+1 234 567 8900"
+            placeholder="+260 97 XXX XXXX"
             value={formData.phone}
             onChange={(e) => setFormData(prev => ({ ...prev, phone: e.target.value }))}
             error={formData.phone !== '' && !isPhoneValid(formData.phone)}
             helperText={formData.phone !== '' && !isPhoneValid(formData.phone) ? 'Please enter a valid phone number (at least 10 digits)' : ''}
-            InputProps={{ startAdornment: <FaPhone style={iconStyle} /> }}
+            InputProps={{ startAdornment: <InputAdornment position="start"><FaPhone style={iconStyle} /></InputAdornment> }}
             sx={fieldSx}
           />
         </Box>
       </Box>
 
-      {/* Traveler Count Selector */}
+      {/* ── Special Requests ── */}
       <Box sx={{ p: 3, border: `1px solid ${Theme.bronze[200]}`, borderRadius: 3 }}>
-        <Typography variant="h6" sx={{
-          fontWeight: 600, color: Theme.bronze[700], mb: 3,
-          display: 'flex', alignItems: 'center', gap: 1,
-        }}>
-          <FaUsers /> Travelers
+        <Typography variant="h6" sx={{ fontWeight: 600, color: Theme.bronze[700], mb: 1, display: 'flex', alignItems: 'center', gap: 1 }}>
+          <FaFileAlt /> Special Requests
         </Typography>
+        <Typography sx={{ color: Theme['dark-khakhi'][600], fontSize: '13px', mb: 2 }}>
+          Optional — dietary requirements, accessibility needs, celebration arrangements, etc.
+        </Typography>
+        <TextField
+          fullWidth
+          multiline
+          rows={3}
+          label="Special Requests (Optional)"
+          placeholder="E.g. vegetarian meals, wheelchair access, anniversary celebration..."
+          value={formData.specialRequest}
+          onChange={(e) => setFormData(prev => ({ ...prev, specialRequest: e.target.value }))}
+          sx={fieldSx}
+        />
+      </Box>
 
+      {/* ── Traveler Count ── */}
+      <Box sx={{ p: 3, border: `1px solid ${Theme.bronze[200]}`, borderRadius: 3 }}>
+        <Typography variant="h6" sx={{ fontWeight: 600, color: Theme.bronze[700], mb: 3, display: 'flex', alignItems: 'center', gap: 1 }}>
+          <FaUsers /> Number of Travelers
+        </Typography>
         <FormControl fullWidth>
           <InputLabel sx={labelSx}>Number of Travelers</InputLabel>
           <Select
@@ -401,14 +484,13 @@ export default function TravelerDetails({ onTravelerInfoSubmit, initialData }: T
         </FormControl>
       </Box>
 
-      {/* Main Traveler */}
+      {/* ── Traveler Forms ── */}
       <TravelerForm
         traveler={formData.mainTraveler}
         isMain
         onChange={updateMainTraveler}
       />
 
-      {/* Additional Travelers */}
       {formData.additionalTravelers.map((traveler, idx) => (
         <TravelerForm
           key={traveler.id}
@@ -420,85 +502,60 @@ export default function TravelerDetails({ onTravelerInfoSubmit, initialData }: T
         />
       ))}
 
-      {/* Add Traveler Button */}
+      {/* ── Add Traveler Button ── */}
       {totalTravelers < MAX_TRAVELERS && (
         <Button
           variant="outlined"
           onClick={addTraveler}
           startIcon={<FaPlus />}
           sx={{
-            alignSelf: 'center',
-            px: 4, py: 1.5,
-            borderRadius: 2,
-            borderColor: Theme.bronze[400],
-            color: Theme.bronze[700],
-            fontWeight: 600,
+            alignSelf: 'center', px: 4, py: 1.5, borderRadius: 2,
+            borderColor: Theme.bronze[400], color: Theme.bronze[700], fontWeight: 600,
             transition: 'all 0.3s',
-            '&:hover': {
-              borderColor: Theme.bronze[600],
-              backgroundColor: Theme.bronze[50],
-              transform: 'translateY(-2px)',
-            },
+            '&:hover': { borderColor: Theme.bronze[600], backgroundColor: Theme.bronze[50], transform: 'translateY(-2px)' },
           }}
         >
           Add Another Traveler
         </Button>
       )}
 
-      {/* Info Cards */}
+      {/* ── Info Cards ── */}
       <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', sm: '1fr 1fr' }, gap: 3, mt: 2 }}>
         {[
           {
             icon: <FaInfoCircle size={14} color={Theme.bronze[600]} />,
-            bg: Theme.wheat[50],
-            border: Theme.bronze[500],
-            iconBg: Theme.bronze[100],
-            title: 'Important Information',
-            body: 'Please ensure all information matches your official ID/passport. Student discounts require valid student ID at check-in.',
+            bg: Theme.wheat[50], border: Theme.bronze[500], iconBg: Theme.bronze[100],
+            title: 'Name must match your ID',
+            body: 'Please enter your full name exactly as it appears on your official document. Mismatches may cause issues at check-in.',
           },
           {
             icon: <FaIdCard size={14} color={Theme['olive-wood'][600]} />,
-            bg: Theme['olive-wood'][50],
-            border: Theme['olive-wood'][500],
-            iconBg: Theme['olive-wood'][100],
-            title: 'Travel Requirements',
-            body: 'All travelers must have valid ID/passport. International travelers should ensure passport validity of at least 6 months.',
+            bg: Theme['olive-wood'][50], border: Theme['olive-wood'][500], iconBg: Theme['olive-wood'][100],
+            title: 'Passport validity',
+            body: 'International travelers should ensure their passport is valid for at least 6 months beyond their travel dates.',
           },
         ].map(({ icon, bg, border, iconBg, title, body }) => (
-          <Box key={title} sx={{
-            p: 2, backgroundColor: bg, borderRadius: 2,
-            borderLeft: `4px solid ${border}`,
-            display: 'flex', gap: 2, alignItems: 'flex-start',
-          }}>
-            <Box sx={{
-              width: 32, height: 32, borderRadius: '50%',
-              backgroundColor: iconBg, flexShrink: 0,
-              display: 'flex', alignItems: 'center', justifyContent: 'center',
-            }}>
+          <Box key={title} sx={{ p: 2, backgroundColor: bg, borderRadius: 2, borderLeft: `4px solid ${border}`, display: 'flex', gap: 2, alignItems: 'flex-start' }}>
+            <Box sx={{ width: 32, height: 32, borderRadius: '50%', backgroundColor: iconBg, flexShrink: 0, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
               {icon}
             </Box>
             <Box>
-              <Typography sx={{ color: Theme['dark-khakhi'][700], fontSize: '14px', fontWeight: 600, mb: 0.5 }}>
-                {title}
-              </Typography>
-              <Typography sx={{ color: Theme['dark-khakhi'][600], fontSize: '12px', lineHeight: 1.5 }}>
-                {body}
-              </Typography>
+              <Typography sx={{ color: Theme['dark-khakhi'][700], fontSize: '14px', fontWeight: 600, mb: 0.5 }}>{title}</Typography>
+              <Typography sx={{ color: Theme['dark-khakhi'][600], fontSize: '12px', lineHeight: 1.5 }}>{body}</Typography>
             </Box>
           </Box>
         ))}
       </Box>
 
-      {/* Status Banner + Submit */}
+      {/* ── Status Banner + Submit ── */}
       <Box sx={{
-        p: 2, borderRadius: 2, textAlign: 'center',
+        p: 2.5, borderRadius: 2, textAlign: 'center',
         backgroundColor: validation.isValid ? Theme['olive-wood'][50] : Theme.wheat[50],
         border: `1px solid ${validation.isValid ? Theme['olive-wood'][200] : Theme.bronze[200]}`,
       }}>
         <Typography sx={{
           color: validation.isValid ? Theme['olive-wood'][600] : Theme.bronze[600],
-          fontSize: '14px',
-          fontWeight: 500,
+          fontSize: '14px', fontWeight: 500,
           mb: validation.isValid ? 2 : 0,
         }}>
           {validation.isValid
@@ -511,12 +568,8 @@ export default function TravelerDetails({ onTravelerInfoSubmit, initialData }: T
             variant="contained"
             onClick={handleSubmit}
             sx={{
-              bgcolor: Theme.bronze[600],
-              color: 'white',
-              px: 5, py: 1.5,
-              fontSize: '15px',
-              fontWeight: 600,
-              borderRadius: 2,
+              bgcolor: Theme.bronze[600], color: 'white',
+              px: 5, py: 1.5, fontSize: '15px', fontWeight: 600, borderRadius: 2,
               '&:hover': { bgcolor: Theme.bronze[800] },
             }}
           >

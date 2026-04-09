@@ -60,14 +60,13 @@ const AdminTripCard: React.FC<AdminTripCardProps> = ({
     return `${formatDate(start)} - ${formatDate(end)}`;
   };
 
-  const formatPrice = (price: number): string => {
-    return new Intl.NumberFormat('en-US', {
-      style: 'currency',
-      currency: 'USD',
-      minimumFractionDigits: 0,
-      maximumFractionDigits: 0,
-    }).format(price);
-  };
+  const formatPrice = (price: number): string =>
+  new Intl.NumberFormat('en-ZM', {
+    style: 'currency',
+    currency: 'ZMW',
+    currencyDisplay: 'symbol',
+    minimumFractionDigits: 0,
+  }).format(price);
 
   return (
     <>

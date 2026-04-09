@@ -1,22 +1,29 @@
+// Step flow:
+//   0 → Destination selection
+//   1 → Package selection
+//   2 → Traveler details
+//   3 → Booking summary  (review only — no API calls)
+//   4 → Payment          (creates travelers → booking → payment)
+
 import { useState } from 'react';
-import { 
-  Box, 
-  Paper, 
-  Typography, 
-  Stepper, 
-  Step, 
-  StepLabel, 
-  Button, 
+import {
+  Box,
+  Paper,
+  Typography,
+  Stepper,
+  Step,
+  StepLabel,
+  Button,
   MobileStepper,
   useTheme,
   useMediaQuery
 } from '@mui/material';
 import { colors } from '@/assets/constants/theme';
 import { typography } from '@/assets/constants/typography';
-import { 
-  FaCalendarAlt, 
-  FaCreditCard, 
-  FaUsers, 
+import {
+  FaCalendarAlt,
+  FaCreditCard,
+  FaUsers,
   FaMapMarkerAlt,
   FaCheck,
   FaArrowLeft,
@@ -31,44 +38,46 @@ import TravelerDetails from './BookingServices/TravelersDetails';
 import BookingSummary from './BookingServices/viewBookingSummary';
 import PaymentDetails from './BookingServices/MakeYourPayment';
 
-// ── Import the real types from the child components ──────────────────────────
 import type { PackageOption } from './BookingServices/ChoosePackage';
-import type { TravelerInfo } from './BookingServices/TravelersDetails';
-import type { TripInput } from '@/types';
+import type { TravelerInfo }   from './BookingServices/TravelersDetails';
+import type { TripInput }       from '@/types';
 
-// ── BookingData now uses the real child-component types ───────────────────────
+// ── Types ─────────────────────────────────────────────────────────────────────
+
 interface BookingData {
-  destination: TripInput | null;
-  selectedPackage: PackageOption | null;
-  travelerInfo: TravelerInfo | null;       // ✅ matches TravelerDetails output
-  totalPrice: number;
+  destination:      TripInput | null;
+  selectedPackage:  PackageOption | null;
+  travelerInfo:     TravelerInfo | null;
+  totalPrice:       number;
   bookingReference?: string;
 }
 
 const steps = [
-  { label: 'Destination',  icon: <FaMapMarkerAlt /> },
-  { label: 'Package',      icon: <FaUsers /> },
-  { label: 'Traveler Info',icon: <FaUsers /> },
-  { label: 'Summary',      icon: <FaCheck /> },
-  { label: 'Payment',      icon: <FaCreditCard /> },
+  { label: 'Destination',   icon: <FaMapMarkerAlt /> },
+  { label: 'Package',       icon: <FaUsers /> },
+  { label: 'Traveler Info', icon: <FaUsers /> },
+  { label: 'Summary',       icon: <FaCheck /> },
+  { label: 'Payment',       icon: <FaCreditCard /> },
 ];
+
+// ── Component ─────────────────────────────────────────────────────────────────
 
 export default function BookingPage() {
   const [activeStep, setActiveStep] = useState(0);
   const [bookingData, setBookingData] = useState<BookingData>({
-    destination: null,
+    destination:     null,
     selectedPackage: null,
-    travelerInfo: null,
-    totalPrice: 0,
+    travelerInfo:    null,
+    totalPrice:      0,
   });
 
-  const theme = useTheme();
+  const theme    = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down('md'));
 
   // ── Navigation ──────────────────────────────────────────────────────────────
 
-  const handleNext = () => setActiveStep(prev => prev + 1);
-  const handleBack = () => setActiveStep(prev => prev - 1);
+  const handleNext = () => setActiveStep(prev => Math.min(prev + 1, steps.length - 1));
+  const handleBack = () => setActiveStep(prev => Math.max(prev - 1, 0));
 
   const handleStepClick = (step: number) => {
     if (step < activeStep) setActiveStep(step);
@@ -92,20 +101,19 @@ export default function BookingPage() {
     }));
   };
 
-  // ✅ Accepts the real TravelerInfo shape from TravelerDetails
   const handleTravelerInfoSubmit = (travelerInfo: TravelerInfo) => {
     setBookingData(prev => ({ ...prev, travelerInfo }));
   };
 
-  const handleBookingComplete = async (paymentDetails?: unknown) => {
-    console.log('Booking completed:', bookingData, paymentDetails);
-    try {
-      // const response = await BookingAPI.createBooking({ ... });
-      // setBookingData(prev => ({ ...prev, bookingReference: response.data.bookingReference }));
-    } catch (error) {
-      console.error('Booking failed:', error);
-      throw error;
-    }
+  // Called by BookingSummary's CTA — just advance the stepper.
+  // PaymentDetails will do the actual API work on mount.
+  const handleProceedToPayment = () => {
+    setActiveStep(4);
+  };
+
+  const handlePaymentComplete = (paymentDetails?: unknown) => {
+    console.log('Booking + payment completed:', bookingData, paymentDetails);
+    // Navigate to confirmation page, etc.
   };
 
   // ── Step validation ─────────────────────────────────────────────────────────
@@ -121,26 +129,26 @@ export default function BookingPage() {
       case 2: {
         const info = bookingData.travelerInfo;
         if (!info) return false;
-        // ✅ Validate against the real TravelerInfo shape
-        const mainOk =
-          Boolean(info.mainTraveler?.fullName) &&
-          Boolean(info.mainTraveler?.age) &&
-          Boolean(info.mainTraveler?.gender) &&
-          Boolean(info.mainTraveler?.idNumber);
+
+        const isTravelerOk = (t: typeof info.mainTraveler) =>
+          Boolean(t.fullName && t.dateOfBirth && t.gender && t.nationality && t.idType && t.idNumber);
+
         const contactOk =
           /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(info.email) &&
           info.phone.length >= 10;
-        const addlOk = info.additionalTravelers.every(
-          t => t.fullName && t.age && t.gender && t.idNumber
+
+        return (
+          isTravelerOk(info.mainTraveler) &&
+          contactOk &&
+          info.additionalTravelers.every(isTravelerOk)
         );
-        return mainOk && contactOk && addlOk;
       }
 
       case 3:
-        return true; // Summary is review-only
+        return true; // Summary is review-only; CTA calls handleProceedToPayment directly
 
       case 4:
-        return true; // PaymentDetails handles its own validation
+        return true; // PaymentDetails manages its own flow
 
       default:
         return false;
@@ -178,13 +186,14 @@ export default function BookingPage() {
           <BookingSummary
             bookingData={bookingData}
             onEdit={(stepNumber: number) => setActiveStep(stepNumber)}
+            onProceedToPayment={handleProceedToPayment}
           />
         );
       case 4:
         return (
           <PaymentDetails
             bookingData={bookingData}
-            onPaymentComplete={handleBookingComplete}
+            onPaymentComplete={handlePaymentComplete}
           />
         );
       default:
@@ -194,6 +203,9 @@ export default function BookingPage() {
 
   const handleNextClick = () => {
     if (!canProceed()) return;
+    // Step 3 uses its own internal CTA (handleProceedToPayment) so the
+    // shared "Continue" button is effectively a no-op on that step.
+    if (activeStep === 3) return;
     if (activeStep < steps.length - 1) handleNext();
   };
 
@@ -285,9 +297,9 @@ export default function BookingPage() {
             }}>
               <Stepper activeStep={activeStep} alternativeLabel sx={{
                 width: '100%',
-                '& .MuiStepConnector-root': { top: 18 },
-                '& .MuiStepConnector-line': { borderColor: colors.darkKhakhi[300], borderWidth: 2 },
-                '& .MuiStepConnector-active .MuiStepConnector-line': { borderColor: colors.oliveWood[500] },
+                '& .MuiStepConnector-root':                         { top: 18 },
+                '& .MuiStepConnector-line':                         { borderColor: colors.darkKhakhi[300], borderWidth: 2 },
+                '& .MuiStepConnector-active .MuiStepConnector-line':    { borderColor: colors.oliveWood[500] },
                 '& .MuiStepConnector-completed .MuiStepConnector-line': { borderColor: colors.oliveWood[500] },
               }}>
                 {steps.map((step, index) => (
@@ -307,8 +319,8 @@ export default function BookingPage() {
                           color: props.active || props.completed ? colors.oliveWood[500] : colors.darkKhakhi[500],
                           transition: 'all 0.3s',
                           '&:hover': {
-                            transform: activeStep > index ? 'scale(1.1)' : 'none',
-                            boxShadow: activeStep > index ? '0 4px 12px rgba(0,0,0,0.15)' : 'none',
+                            transform:  activeStep > index ? 'scale(1.1)' : 'none',
+                            boxShadow:  activeStep > index ? '0 4px 12px rgba(0,0,0,0.15)' : 'none',
                           },
                         }}>
                           {props.completed ? <FaCheck size={20} /> : step.icon}
@@ -316,8 +328,8 @@ export default function BookingPage() {
                       )}
                       sx={{
                         width: '100%',
-                        '& .MuiStepLabel-label': { fontSize: { xs: '14px', sm: '16px', md: '17px' }, fontWeight: 500, color: colors.darkKhakhi[700], mt: 1 },
-                        '& .MuiStepLabel-label.Mui-active': { color: colors.oliveWood[600], fontWeight: 600 },
+                        '& .MuiStepLabel-label':           { fontSize: { xs: '14px', sm: '16px', md: '17px' }, fontWeight: 500, color: colors.darkKhakhi[700], mt: 1 },
+                        '& .MuiStepLabel-label.Mui-active':    { color: colors.oliveWood[600], fontWeight: 600 },
                         '& .MuiStepLabel-label.Mui-completed': { color: colors.oliveWood[600] },
                       }}
                     >
@@ -343,34 +355,55 @@ export default function BookingPage() {
                 activeStep={activeStep}
                 sx={{
                   width: '100%', backgroundColor: 'transparent',
-                  '& .MuiMobileStepper-dot': { width: 12, height: 12, backgroundColor: colors.darkKhakhi[300], margin: '0 4px' },
-                  '& .MuiMobileStepper-dotActive': { backgroundColor: colors.oliveWood[500], transform: 'scale(1.2)' },
+                  '& .MuiMobileStepper-dot':       { width: 12, height: 12, backgroundColor: colors.darkKhakhi[300], margin: '0 4px' },
+                  '& .MuiMobileStepper-dotActive':  { backgroundColor: colors.oliveWood[500], transform: 'scale(1.2)' },
                 }}
                 nextButton={
-                  <Button size="small" onClick={handleNextClick} disabled={activeStep === steps.length - 1 || !canProceed()} sx={{ color: colors.oliveWood[500], fontWeight: 600, fontSize: '15px', textTransform: 'none' }}>
+                  <Button
+                    size="small"
+                    onClick={handleNextClick}
+                    disabled={activeStep === steps.length - 1 || !canProceed() || activeStep === 3}
+                    sx={{ color: colors.oliveWood[500], fontWeight: 600, fontSize: '15px', textTransform: 'none' }}
+                  >
                     Next <FaArrowRight style={{ marginLeft: 8 }} />
                   </Button>
                 }
                 backButton={
-                  <Button size="small" onClick={handleBack} disabled={activeStep === 0} sx={{ color: colors.darkKhakhi[600], fontWeight: 600, fontSize: '15px', textTransform: 'none' }}>
+                  <Button
+                    size="small"
+                    onClick={handleBack}
+                    disabled={activeStep === 0}
+                    sx={{ color: colors.darkKhakhi[600], fontWeight: 600, fontSize: '15px', textTransform: 'none' }}
+                  >
                     <FaArrowLeft style={{ marginRight: 8 }} /> Back
                   </Button>
                 }
               />
-              <Typography variant="h6" sx={{ textAlign: 'center', color: colors.bronze[700], fontWeight: 700, fontSize: '18px', mt: 2, mb: 1 }}>
+              <Typography variant="h6" sx={{
+                textAlign: 'center', color: colors.bronze[700],
+                fontWeight: 700, fontSize: '18px', mt: 2, mb: 1,
+              }}>
                 {steps[activeStep].label}
               </Typography>
             </Box>
           )}
 
           {/* Step Content */}
-          <Box sx={{ flex: 1, display: 'flex', flexDirection: 'column', minHeight: { xs: '500px', sm: '550px', md: '600px', lg: '650px' }, overflow: 'auto', width: '100%' }}>
+          <Box sx={{
+            flex: 1, display: 'flex', flexDirection: 'column',
+            minHeight: { xs: '500px', sm: '550px', md: '600px', lg: '650px' },
+            overflow: 'auto', width: '100%',
+          }}>
             <Box sx={{ flex: 1, p: { xs: 3, sm: 4, md: 5 }, width: '100%' }}>
               {getStepContent(activeStep)}
             </Box>
 
             {/* Navigation Buttons */}
-            <Box sx={{ width: '100%', p: { xs: 3, sm: 4, md: 5 }, pt: 2, borderTop: `1px solid ${colors.darkKhakhi[100]}`, backgroundColor: colors.wheat[50] }}>
+            <Box sx={{
+              width: '100%', p: { xs: 3, sm: 4, md: 5 }, pt: 2,
+              borderTop: `1px solid ${colors.darkKhakhi[100]}`,
+              backgroundColor: colors.wheat[50],
+            }}>
               <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', width: '100%' }}>
                 <Button
                   variant="outlined"
@@ -391,42 +424,63 @@ export default function BookingPage() {
                 </Button>
 
                 <Box sx={{ display: 'flex', alignItems: 'center', gap: 3 }}>
-                  <Typography variant="body2" sx={{ color: colors.darkKhakhi[600], fontSize: { xs: '14px', sm: '15px', md: '16px' }, fontWeight: 500, display: { xs: 'none', sm: 'block' } }}>
+                  <Typography variant="body2" sx={{
+                    color: colors.darkKhakhi[600],
+                    fontSize: { xs: '14px', sm: '15px', md: '16px' },
+                    fontWeight: 500,
+                    display: { xs: 'none', sm: 'block' },
+                  }}>
                     Step {activeStep + 1} of {steps.length}
                   </Typography>
 
-                  <Button
-                    variant="contained"
-                    onClick={handleNextClick}
-                    endIcon={<FaArrowRight />}
-                    disabled={!canProceed()}
-                    sx={{
-                      px: { xs: 4, sm: 5, md: 6 }, py: { xs: 1.5, sm: 2 },
-                      borderRadius: '12px',
-                      backgroundColor: activeStep === steps.length - 1 ? colors.oliveWood[600] : colors.bronze[500],
-                      color: 'white', fontWeight: 700,
-                      fontSize: { xs: '15px', sm: '16px', md: '17px' },
-                      transition: 'all 0.3s',
-                      '&:hover': {
-                        backgroundColor: activeStep === steps.length - 1 ? colors.oliveWood[700] : colors.bronze[600],
-                        transform: 'translateY(-3px)',
-                        boxShadow: '0 8px 20px rgba(0,0,0,0.2)',
-                      },
-                      '&.Mui-disabled': { backgroundColor: colors.darkKhakhi[300], transform: 'none' },
-                    }}
-                  >
-                    {activeStep === steps.length - 1 ? 'Complete Booking' : 'Continue'}
-                  </Button>
+                  {/* Hide the shared Continue button on the Summary step —
+                      it has its own internal CTA */}
+                  {activeStep !== 3 && activeStep !== 4 && (
+                    <Button
+                      variant="contained"
+                      onClick={handleNextClick}
+                      endIcon={<FaArrowRight />}
+                      disabled={!canProceed()}
+                      sx={{
+                        px: { xs: 4, sm: 5, md: 6 }, py: { xs: 1.5, sm: 2 },
+                        borderRadius: '12px',
+                        backgroundColor: colors.bronze[500],
+                        color: 'white', fontWeight: 700,
+                        fontSize: { xs: '15px', sm: '16px', md: '17px' },
+                        transition: 'all 0.3s',
+                        '&:hover': {
+                          backgroundColor: colors.bronze[600],
+                          transform:        'translateY(-3px)',
+                          boxShadow:        '0 8px 20px rgba(0,0,0,0.2)',
+                        },
+                        '&.Mui-disabled': { backgroundColor: colors.darkKhakhi[300], transform: 'none' },
+                      }}
+                    >
+                      Continue
+                    </Button>
+                  )}
                 </Box>
               </Box>
 
               {/* Mobile progress bar */}
               {isMobile && (
                 <Box sx={{ mt: 3 }}>
-                  <Box sx={{ width: '100%', height: 6, backgroundColor: colors.darkKhakhi[100], borderRadius: 3, overflow: 'hidden' }}>
-                    <Box sx={{ width: `${((activeStep + 1) / steps.length) * 100}%`, height: '100%', backgroundColor: colors.oliveWood[500], transition: 'width 0.4s ease-out' }} />
+                  <Box sx={{
+                    width: '100%', height: 6,
+                    backgroundColor: colors.darkKhakhi[100],
+                    borderRadius: 3, overflow: 'hidden',
+                  }}>
+                    <Box sx={{
+                      width: `${((activeStep + 1) / steps.length) * 100}%`,
+                      height: '100%',
+                      backgroundColor: colors.oliveWood[500],
+                      transition: 'width 0.4s ease-out',
+                    }} />
                   </Box>
-                  <Box sx={{ display: 'flex', justifyContent: 'space-between', mt: 1.5, color: colors.darkKhakhi[600], fontSize: '13px' }}>
+                  <Box sx={{
+                    display: 'flex', justifyContent: 'space-between',
+                    mt: 1.5, color: colors.darkKhakhi[600], fontSize: '13px',
+                  }}>
                     <span>Step {activeStep + 1}</span>
                     <span>{Math.round(((activeStep + 1) / steps.length) * 100)}% Complete</span>
                   </Box>
@@ -439,11 +493,17 @@ export default function BookingPage() {
         {/* Info Footer */}
         <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 2, justifyContent: 'center', mt: 2, px: { xs: 2, sm: 3 } }}>
           {[
-            { icon: <FaShieldAlt size={18} color={colors.oliveWood[600]} />, bg: colors.oliveWood[50], border: colors.oliveWood[200], title: 'Secure Payment', sub: '256-bit SSL encryption' },
-            { icon: <FaCalendarAlt size={18} color={colors.bronze[600]} />, bg: colors.wheat[50], border: colors.wheat[300], title: 'Instant Confirmation', sub: 'Within 24 hours' },
-            { icon: <FaHeadset size={18} color={colors.bronze[600]} />, bg: colors.bronze[50], border: colors.bronze[200], title: '24/7 Support', sub: 'Always here to help' },
+            { icon: <FaShieldAlt size={18} color={colors.oliveWood[600]} />, bg: colors.oliveWood[50],  border: colors.oliveWood[200], title: 'Secure Payment',       sub: '256-bit SSL encryption' },
+            { icon: <FaCalendarAlt size={18} color={colors.bronze[600]} />,  bg: colors.wheat[50],     border: colors.wheat[300],     title: 'Instant Confirmation', sub: 'Within 24 hours' },
+            { icon: <FaHeadset size={18} color={colors.bronze[600]} />,      bg: colors.bronze[50],    border: colors.bronze[200],    title: '24/7 Support',         sub: 'Always here to help' },
           ].map(({ icon, bg, border, title, sub }) => (
-            <Box key={title} sx={{ display: 'flex', alignItems: 'center', gap: 1.5, px: 3, py: 1.5, backgroundColor: bg, borderRadius: '16px', border: `2px solid ${border}`, flex: 1, minWidth: '200px', maxWidth: '300px' }}>
+            <Box key={title} sx={{
+              display: 'flex', alignItems: 'center', gap: 1.5,
+              px: 3, py: 1.5,
+              backgroundColor: bg, borderRadius: '16px',
+              border: `2px solid ${border}`,
+              flex: 1, minWidth: '200px', maxWidth: '300px',
+            }}>
               {icon}
               <Box>
                 <Typography sx={{ color: colors.darkKhakhi[800], fontSize: '14px', fontWeight: 700 }}>{title}</Typography>

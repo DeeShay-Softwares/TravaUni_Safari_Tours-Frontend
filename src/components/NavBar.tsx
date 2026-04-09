@@ -46,10 +46,10 @@ interface TransparentNavProps {
 const NavBar: React.FC<TransparentNavProps> = ({
   logoText = 'TravaUni Safari Tours',
   navItems = [
-    { label: 'About', href: '#about' },
+    { label: 'About', href: '#services' },
     { label: 'Services', href: '#services' },
-    { label: 'Tour', href: '#tour' },
-    { label: 'Contact', href: '#contact' },
+    { label: 'Tour', href: '#tours' },
+    { label: 'Gallery', href: '#gallery' },
   ],
   position = 'static',
   tabBackground = 'rgba(255, 255, 255, 0.15)', // Glass effect

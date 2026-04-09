@@ -1,6 +1,6 @@
 import { Paper, Box, Avatar, Typography } from "@mui/material";
 import { FaDotCircle } from "react-icons/fa";
-import { colors } from "@/assets/constants/Theme";
+import { colors } from "@/assets/constants/theme";
 import "../App.css";
 
 interface ProfileProps {

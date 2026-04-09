@@ -39,7 +39,7 @@ const transformStyles = [
         }
 
     return(
-        <>
+        <div id='gallery'>
         <Section backgroundColor={Theme.wheat[100]} padding="60px 50px" sx={{
                 height: '100vh' }}>
        
@@ -126,7 +126,7 @@ const transformStyles = [
 
         </Section>
         
-        </>
+        </div>
     )
 }
 

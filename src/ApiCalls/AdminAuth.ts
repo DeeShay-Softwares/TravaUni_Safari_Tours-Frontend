@@ -1,14 +1,4 @@
-import axios from "axios";
-
-const BASE_URL = "http://localhost:4000/auth";
-
-const authApi = axios.create({
-  baseURL: BASE_URL,
-  headers: {
-    "Content-Type": "application/json",
-  },
-  withCredentials: true,
-});
+import { authApi } from "@/lib/apiClient";
 
 const login = async (username: string, password: string) => {
   try {

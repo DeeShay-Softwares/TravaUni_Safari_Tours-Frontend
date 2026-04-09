@@ -1,4 +1,3 @@
-// src/components/RegistrationDetailsModal.tsx
 import React from 'react';
 import {
   Modal,
@@ -28,7 +27,7 @@ import {
   FiShield
 } from 'react-icons/fi';
 import { FaWhatsapp } from 'react-icons/fa';
-import { colors } from '../assets/constants/Theme';
+import { colors } from '../assets/constants/theme';
 import type { Registration } from '../types';
 
 interface RegistrationDetailsModalProps {

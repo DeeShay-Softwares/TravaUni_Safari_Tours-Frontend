@@ -2,25 +2,17 @@
 import React, { useState } from 'react';
 import {
   FaWhatsapp,
-  FaTelegram,
   FaInstagram,
   FaFacebookF,
   FaTwitter,
   FaLinkedinIn,
   FaEnvelope,
-  FaComment,
   FaPhone,
   FaPaperPlane,
   FaBlog,
-  FaBriefcase,
-  FaSearch,
-  FaNewspaper,
   FaImages,
-  FaTicketAlt,
   FaCalendarCheck,
   FaCreditCard,
-  FaExchangeAlt,
-  FaShieldAlt,
   FaFileContract,
   FaMapMarkerAlt
 } from 'react-icons/fa';
@@ -97,7 +89,7 @@ const Footer: React.FC = () => {
   ];
 
   return (
-    <>
+    <div id='footer'>
       <footer className="footer-container">
         <div className="footer-content">
           <div className="footer-grid">
@@ -230,7 +222,7 @@ const Footer: React.FC = () => {
           </div>
         </div>
       )}
-    </>
+    </div>
   );
 };
 

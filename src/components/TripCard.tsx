@@ -27,9 +27,13 @@ const TripCard: React.FC<TripCardProps> = ({ trip, onClick }) => {
     return `${formatDate(start)} - ${formatDate(end)}`;
   };
 
-  const formatPrice = (price: number): string => {
-    return `$${price}`;
-  };
+  const formatPrice = (price: number): string =>
+  new Intl.NumberFormat('en-ZM', {
+    style: 'currency',
+    currency: 'ZMW',
+    currencyDisplay: 'symbol',
+    minimumFractionDigits: 0,
+  }).format(price);
 
   const glassEffect = {
     background: 'rgba(255, 255, 255, 0.85)',
