@@ -78,6 +78,14 @@ const TripDetailsPanel: React.FC<TripDetailsModalProps> = ({ trip, open, onClose
     });
   };
 
+  const formatPrice = (price: number): string =>
+  new Intl.NumberFormat('en-ZM', {
+    style: 'currency',
+    currency: 'ZMW',
+    currencyDisplay: 'symbol',
+    minimumFractionDigits: 0,
+  }).format(price);
+
   if (!trip) return null;
 
   return (
@@ -200,7 +208,7 @@ const TripDetailsPanel: React.FC<TripDetailsModalProps> = ({ trip, open, onClose
                   <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 2 }}>
                     <Typography color="text.secondary">Price per person</Typography>
                     <Typography variant="h5" fontWeight={700} color={colors.oliveWood[600]}>
-                      ${trip.price}
+                     {formatPrice(trip.price)}
                     </Typography>
                   </Box>
 

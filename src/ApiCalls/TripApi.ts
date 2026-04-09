@@ -1,21 +1,4 @@
-import axios from "axios";
-
-// Create the call
-const BASE_URL = "http://localhost:4000/trips"; // Adjust port as needed
-
-const token = localStorage.getItem("token");
-
-if (!token) {
-  console.log("No token found");
-}
-
-const tripApi = axios.create({
-  baseURL: BASE_URL,
-  headers: {
-    "Content-Type": "application/json",
-    Authorization: `Bearer ${token}`,
-  },
-});
+import { tripApi } from "@/lib/apiClient";
 
 // Create a new trip
 const createTrip = async (data: object) => {

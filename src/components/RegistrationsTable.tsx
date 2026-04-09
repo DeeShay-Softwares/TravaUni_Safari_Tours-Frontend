@@ -13,66 +13,30 @@ import {
   IconButton,
   Box,
   Typography,
-  TextField,
-  MenuItem,
-  Button,
   Tooltip
 } from '@mui/material';
 import {
   FiEye,
   FiCheckCircle,
-  FiDownload,
   FiMail
 } from 'react-icons/fi';
 import { FaWhatsapp } from 'react-icons/fa';
-import { colors } from '../assets/constants/Theme';
-import type { Registration, Trip } from '../types';
+import { colors } from '../assets/constants/theme';
+import type { Registration } from '../types';
 
 interface RegistrationsTableProps {
   registrations: Registration[];
-  trips: Trip[];
   onConfirm: (registrationId: string) => void;
   onViewDetails: (registration: Registration) => void;
-  onFilter: (filters: any) => void;
 }
 
 const RegistrationsTable: React.FC<RegistrationsTableProps> = ({
   registrations,
-  trips,
   onConfirm,
   onViewDetails,
-  onFilter
 }) => {
   const [page, setPage] = useState(0);
   const [rowsPerPage, setRowsPerPage] = useState(10);
-  const [filters, setFilters] = useState({
-    tripId: '',
-    status: '',
-    paymentStatus: '',
-    search: ''
-  });
-
-  const handleFilterChange = (name: string, value: string) => {
-    const newFilters = { ...filters, [name]: value };
-    setFilters(newFilters);
-    onFilter(newFilters);
-  };
-
-  const filteredRegistrations = registrations.filter(reg => {
-    if (filters.tripId && reg.tripId !== filters.tripId) return false;
-    if (filters.status && reg.status !== filters.status) return false;
-    if (filters.paymentStatus && reg.paymentStatus !== filters.paymentStatus) return false;
-    if (filters.search) {
-      const searchLower = filters.search.toLowerCase();
-      return (
-        reg.fullName.toLowerCase().includes(searchLower) ||
-        reg.email.toLowerCase().includes(searchLower) ||
-        reg.bookingId.toLowerCase().includes(searchLower) ||
-        reg.phoneNumber.includes(filters.search)
-      );
-    }
-    return true;
-  });
 
   const handleChangePage = (_event: unknown, newPage: number) => {
     setPage(newPage);
@@ -86,97 +50,29 @@ const RegistrationsTable: React.FC<RegistrationsTableProps> = ({
   const getStatusColor = (status: Registration['status']) => {
     switch (status) {
       case 'confirmed': return 'success';
-      case 'pending': return 'warning';
+      case 'pending':   return 'warning';
       case 'cancelled': return 'error';
       case 'completed': return 'info';
-      default: return 'default';
+      default:          return 'default';
     }
   };
 
   const getPaymentColor = (status: Registration['paymentStatus']) => {
     switch (status) {
-      case 'paid': return 'success';
+      case 'paid':    return 'success';
       case 'partial': return 'warning';
       case 'pending': return 'error';
-      default: return 'default';
+      default:        return 'default';
     }
   };
 
   return (
     <Paper sx={{ borderRadius: 3, overflow: 'hidden' }}>
-      {/* Filters */}
+      {/* Header */}
       <Box sx={{ p: 3, borderBottom: `1px solid ${colors.darkKhakhi[200]}` }}>
-        <Typography variant="h6" fontWeight={600} gutterBottom>
-          Registrations ({filteredRegistrations.length})
+        <Typography variant="h6" fontWeight={600}>
+          Registrations ({registrations.length})
         </Typography>
-        
-        <Box sx={{ display: 'flex', gap: 2, flexWrap: 'wrap', mb: 2 }}>
-          <TextField
-            select
-            size="small"
-            label="Trip"
-            value={filters.tripId}
-            onChange={(e) => handleFilterChange('tripId', e.target.value)}
-            sx={{ minWidth: 200 }}
-          >
-            <MenuItem value="">All Trips</MenuItem>
-            {trips.map(trip => (
-              <MenuItem key={trip.id} value={trip.id}>
-                {trip.title}
-              </MenuItem>
-            ))}
-          </TextField>
-
-          <TextField
-            select
-            size="small"
-            label="Status"
-            value={filters.status}
-            onChange={(e) => handleFilterChange('status', e.target.value)}
-            sx={{ minWidth: 150 }}
-          >
-            <MenuItem value="">All Status</MenuItem>
-            <MenuItem value="pending">Pending</MenuItem>
-            <MenuItem value="confirmed">Confirmed</MenuItem>
-            <MenuItem value="cancelled">Cancelled</MenuItem>
-            <MenuItem value="completed">Completed</MenuItem>
-          </TextField>
-
-          <TextField
-            select
-            size="small"
-            label="Payment"
-            value={filters.paymentStatus}
-            onChange={(e) => handleFilterChange('paymentStatus', e.target.value)}
-            sx={{ minWidth: 150 }}
-          >
-            <MenuItem value="">All Payments</MenuItem>
-            <MenuItem value="pending">Pending</MenuItem>
-            <MenuItem value="partial">Partial</MenuItem>
-            <MenuItem value="paid">Paid</MenuItem>
-          </TextField>
-
-          <TextField
-            size="small"
-            label="Search"
-            placeholder="Name, Email, Phone..."
-            value={filters.search}
-            onChange={(e) => handleFilterChange('search', e.target.value)}
-            sx={{ minWidth: 200 }}
-          />
-
-          <Button
-            startIcon={<FiDownload />}
-            variant="outlined"
-            size="small"
-            onClick={() => {
-              // Export logic
-              console.log('Exporting registrations...');
-            }}
-          >
-            Export
-          </Button>
-        </Box>
       </Box>
 
       {/* Table */}
@@ -196,7 +92,7 @@ const RegistrationsTable: React.FC<RegistrationsTableProps> = ({
             </TableRow>
           </TableHead>
           <TableBody>
-            {filteredRegistrations
+            {registrations
               .slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage)
               .map((reg) => (
                 <TableRow key={reg.id} hover>
@@ -205,6 +101,7 @@ const RegistrationsTable: React.FC<RegistrationsTableProps> = ({
                       {reg.bookingId}
                     </Typography>
                   </TableCell>
+
                   <TableCell>
                     <Box>
                       <Typography fontWeight={600}>{reg.fullName}</Typography>
@@ -213,30 +110,31 @@ const RegistrationsTable: React.FC<RegistrationsTableProps> = ({
                       </Typography>
                     </Box>
                   </TableCell>
+
                   <TableCell>
-                    <Typography variant="body2">
-                      {reg.tripTitle}
-                    </Typography>
+                    <Typography variant="body2">{reg.tripTitle}</Typography>
                   </TableCell>
+
                   <TableCell>
                     <Chip
                       label={reg.status.toUpperCase()}
                       size="small"
-                      color={getStatusColor(reg.status) as any}
+                      color={getStatusColor(reg.status)}
                     />
                   </TableCell>
+
                   <TableCell>
                     <Chip
                       label={reg.paymentStatus.toUpperCase()}
                       size="small"
-                      color={getPaymentColor(reg.paymentStatus) as any}
+                      color={getPaymentColor(reg.paymentStatus)}
                     />
                   </TableCell>
+
                   <TableCell>
-                    <Typography fontWeight={600}>
-                      ${reg.paymentAmount}
-                    </Typography>
+                    <Typography fontWeight={600}>${reg.paymentAmount}</Typography>
                   </TableCell>
+
                   <TableCell>
                     <Chip
                       label={reg.isStudent ? 'STUDENT' : 'REGULAR'}
@@ -245,11 +143,13 @@ const RegistrationsTable: React.FC<RegistrationsTableProps> = ({
                       color={reg.isStudent ? 'info' : 'default'}
                     />
                   </TableCell>
+
                   <TableCell>
                     <Typography variant="body2">
                       {new Date(reg.registrationDate).toLocaleDateString()}
                     </Typography>
                   </TableCell>
+
                   <TableCell>
                     <Box sx={{ display: 'flex', gap: 1 }}>
                       <Tooltip title="View Details">
@@ -277,7 +177,12 @@ const RegistrationsTable: React.FC<RegistrationsTableProps> = ({
                       <Tooltip title="Send WhatsApp">
                         <IconButton
                           size="small"
-                          onClick={() => window.open(`https://wa.me/${reg.whatsappNumber || reg.phoneNumber}`, '_blank')}
+                          onClick={() =>
+                            window.open(
+                              `https://wa.me/${reg.whatsappNumber || reg.phoneNumber}`,
+                              '_blank',
+                            )
+                          }
                           sx={{ color: '#25D366' }}
                         >
                           <FaWhatsapp />
@@ -287,7 +192,9 @@ const RegistrationsTable: React.FC<RegistrationsTableProps> = ({
                       <Tooltip title="Send Email">
                         <IconButton
                           size="small"
-                          onClick={() => window.location.href = `mailto:${reg.email}`}
+                          onClick={() =>
+                            (window.location.href = `mailto:${reg.email}`)
+                          }
                           sx={{ color: colors.bronze[600] }}
                         >
                           <FiMail />
@@ -305,7 +212,7 @@ const RegistrationsTable: React.FC<RegistrationsTableProps> = ({
       <TablePagination
         rowsPerPageOptions={[5, 10, 25, 50]}
         component="div"
-        count={filteredRegistrations.length}
+        count={registrations.length}
         rowsPerPage={rowsPerPage}
         page={page}
         onPageChange={handleChangePage}

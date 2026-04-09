@@ -165,16 +165,16 @@ export default function PackageSelection({
 
             <Box sx={{ mt: 3, p: 3, bgcolor: `${Theme.wheat[100]}80`, borderRadius: 2, textAlign: 'center' }}>
               <Typography sx={{ color: Theme.bronze[600], fontSize: '16px', fontWeight: 600, mb: 1 }}>
-                ✨ Package Options Coming Soon! ✨
+                ✨ No Packages Options For This Trip ✨
               </Typography>
               <Typography sx={{ color: Theme['dark-khakhi'][600], fontSize: '14px', mb: 1 }}>
                 We're working on exciting package upgrades to enhance your safari experience.
               </Typography>
               <Typography sx={{ color: Theme.bronze[600], fontSize: '13px', fontStyle: 'italic', mb: 3 }}>
-                For now, you'll pay the base destination price of {formatPrice(selectedDestination.price)}
+                For now, you'll pay the base destination price of {formatPrice(selectedDestination.price)} to reserve your slot
               </Typography>
 
-              {/* ✅ Fix 3: Select button to enable Continue */}
+              {/* Select button to enable Continue */}
               <Button
                 variant="contained"
                 onClick={() => {
@@ -405,14 +405,14 @@ function formatDuration(startDate: string, endDate: string): string {
   return `${diffDays} ${diffDays === 1 ? 'day' : 'days'}`;
 }
 
-function formatPrice(price: number): string {
-  return new Intl.NumberFormat('en-US', {
+const formatPrice = (price: number): string => {
+  return new Intl.NumberFormat('en-ZM', {
     style: 'currency',
-    currency: 'USD',
+    currency: 'ZMW',
+    currencyDisplay: 'symbol', // Shows K or ZMW
     minimumFractionDigits: 0,
-    maximumFractionDigits: 0
   }).format(price);
-}
+};
 
 function formatDate(dateString: string): string {
   return new Date(dateString).toLocaleDateString('en-US', {

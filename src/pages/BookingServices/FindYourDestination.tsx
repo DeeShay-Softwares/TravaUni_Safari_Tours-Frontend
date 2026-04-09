@@ -52,9 +52,14 @@ export default function DestinationSelection({
     return `${diffDays} ${diffDays === 1 ? 'day' : 'days'}`;
   };
 
-  const formatPrice = (price: number): string =>
-    new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD', minimumFractionDigits: 0, maximumFractionDigits: 0 }).format(price);
-
+    const formatPrice = (price: number): string =>
+  new Intl.NumberFormat('en-ZM', {
+    style: 'currency',
+    currency: 'ZMW',
+    currencyDisplay: 'symbol',
+    minimumFractionDigits: 0,
+  }).format(price);
+  
   if (loading) {
     return (
       <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', minHeight: '50vh' }}>

@@ -113,7 +113,7 @@ export interface Registration {
   email: string;
   phoneNumber: string;
   age: number;
-  gender: "male" | "female" | "other";
+  gender: 'male' | 'female' | 'other' | 'prefer-not-to-say';
   nationality: string;
 
   // Student Information

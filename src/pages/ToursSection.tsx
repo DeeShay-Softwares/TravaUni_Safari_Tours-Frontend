@@ -13,7 +13,7 @@ export function ToursSection(){
   const isMobile = useMediaQuery(muiTheme.breakpoints.down('sm'));
 
     return(
-        <>
+        <div id='tours'>
        <Section backgroundColor={Theme.wheat[100]} padding="60px 50px" sx={{
         height: '100vh'
        }}>
@@ -84,6 +84,6 @@ export function ToursSection(){
 
        
 
-        </>
+        </div>
     )
 }

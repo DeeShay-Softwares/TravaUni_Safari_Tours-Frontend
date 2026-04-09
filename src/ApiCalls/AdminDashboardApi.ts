@@ -1,17 +1,13 @@
 // ApiCalls/AdminDashboard.ts
 import axios, { AxiosError } from "axios";
 import { ApiError } from "../types";
+import { adminDashboardApi } from "@/lib/apiClient";
 
-const API_URL = "http://localhost:4000/api";
 
 class AdminDashboardApi {
-  async getDashboardData(token: string) {
+  async getDashboardData() {
     try {
-      const response = await axios.get(`${API_URL}/admin/dashboard`, {
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
-      });
+      const response = await adminDashboardApi.get(`/admin/dashboard`)
 
       return response.data;
     } catch (error) {
@@ -27,7 +23,6 @@ class AdminDashboardApi {
           "Failed to fetch dashboard";
         const data = axiosError.response?.data;
 
-        // 👇 THROW the ApiError
         throw new ApiError(message, statusCode, data);
       }
 
@@ -36,13 +31,9 @@ class AdminDashboardApi {
     }
   }
 
-  async getProfile(token: string) {
+  async getProfile() {
     try {
-      const response = await axios.get(`${API_URL}/admin/profile`, {
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
-      });
+      const response = await adminDashboardApi.get(`/admin/profile`);
 
       return response.data;
     } catch (error) {

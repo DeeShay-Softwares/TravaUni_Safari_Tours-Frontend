@@ -119,7 +119,7 @@ const TripsSection: React.FC = () => {
   };
 
   return (
-
+<div id='trips'>
 <Section backgroundColor={Theme.wheat[100]} padding="60px 50px" sx={{
         height: '100vh'
        }}>
@@ -331,6 +331,7 @@ const TripsSection: React.FC = () => {
       />
     </Box>
     </Section>
+    </div>
   );
 };
 

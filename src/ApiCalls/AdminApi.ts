@@ -1,21 +1,4 @@
-import axios from "axios";
-
-//create the call
-const BASE_URL = "http://localhost:4000/admin";
-
-const token = localStorage.getItem("token");
-
-if (!token) {
-  console.log("No token found");
-}
-
-const adminApi = axios.create({
-  baseURL: BASE_URL,
-  headers: {
-    "Content-Type": "application/json",
-    Authorization: `Bearer ${token}`,
-  },
-});
+import { adminApi } from "@/lib/apiClient";
 
 const registerAdmins = async (data: object) => {
   const response = await adminApi.post("/register", data);

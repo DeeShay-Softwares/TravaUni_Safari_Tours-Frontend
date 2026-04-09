@@ -47,7 +47,7 @@ const [isHelpModalOpen, setIsHelpModalOpen] = useState(false);
   };
 
   return (
-    <>
+    <div id='services'>
       <Section 
         backgroundColor={Theme.wheat[100]} 
         padding={isMobile ? "40px 20px" : isSmallScreen ? "50px 30px" : "30px 30px"}
@@ -384,6 +384,6 @@ const [isHelpModalOpen, setIsHelpModalOpen] = useState(false);
 
      
    
-    </>
+    </div>
   );
 }
